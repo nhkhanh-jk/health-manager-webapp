@@ -1,7 +1,12 @@
 package com.hrmanagement.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "users")
 public class User {
@@ -10,44 +15,39 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @NotBlank
+    @Size(max = 50)
+    private String ho; 
+
+    @NotBlank
+    @Size(max = 50)
+    private String ten; 
+    
+    @NotBlank
+    @Size(max = 100)
+    @Email
+    @Column(unique = true) 
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @NotBlank
+    @Size(max = 120) 
+    private String matKhau;
 
-    private String firstName;
-    private String lastName;
-    private String gender;
-    private Integer age;
+    private int tuoi; 
 
-    @Column(nullable = false)
-    private String role = "USER";
+    private String gioiTinh; 
 
-    public User() {}
+    // Constructors
+    public User() {
+    }
 
-    // Getters & Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public User(String firstName, String lastName, String email, String password, int age, String gender) {
+        this.ho= firstName;
+        this.ten = lastName;
+        this.email = email;
+        this.matKhau = password;
+        this.tuoi = age;
+        this.gioiTinh = gender;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 }
