@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 // @CrossOrigin đã được xử lý trong SecurityConfig, nhưng để đây cũng không sao
 // @CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {

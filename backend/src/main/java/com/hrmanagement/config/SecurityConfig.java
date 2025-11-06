@@ -16,78 +16,87 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    UserDetailsServiceImpl userDetailsService;
+    private UserDetailsServiceImpl userDetailsService;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // Bean để mã hóa mật khẩu
+    // ✅ Mã hoá mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ✅ Cấu hình provider dùng UserDetailsService + Bcrypt
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); // 1. Chỉ cách tìm user
-        authProvider.setPasswordEncoder(passwordEncoder());     // 2. Chỉ cách so mật khẩu
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
-    // Bean AuthenticationManager
-    // @Bean
-    // public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-    //     return authConfig.getAuthenticationManager();
-    // }
-
+    // ✅ Cấu hình AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        return http.getSharedObject(org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder.class)
-                .authenticationProvider(authenticationProvider()) // Gắn provider đã config
-                .build();
-    }
-    
-    // Bean Cấu hình CORS
-    @Bean
-    public UrlBasedCorsConfigurationSource corsConfigurationSource() { 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3000"); // Cho phép React port 3000
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        return source; // <-- Sửa: Trả về "source"
+        AuthenticationManagerBuilder authBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+        authBuilder.authenticationProvider(authenticationProvider());
+        return authBuilder.build();
     }
 
-    // Bean cấu hình các quy tắc bảo mật
+    // ✅ Cấu hình CORS cho React
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        // ⚡ Cho phép tất cả origin trong giai đoạn dev (localhost, deploy, v.v.)
+        config.addAllowedOriginPattern("*");
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.addAllowedHeader("*");
+        config.addExposedHeader("Authorization");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    // ✅ Cấu hình SecurityFilterChain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Áp dụng CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .authenticationProvider(authenticationProvider()) // Tắt CSRF vì dùng API
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không dùng session
-            .authorizeHttpRequests(authz -> authz
-                // Cho phép các endpoint /api/auth/** (register, login) được truy cập công khai
-                .requestMatchers("/api/auth/**").permitAll()
-
-                .requestMatchers("/api/user/**").authenticated()
-                // Tất cả các request khác đều cần phải xác thực
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider())
+            .authorizeHttpRequests(auth -> auth
+                // 🌐 Cho phép các endpoint công khai
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/news/**").permitAll()
+                .requestMatchers("/medical-news/**").permitAll()
+                .requestMatchers("/ai/**").permitAll()
+                .requestMatchers("/health/**").permitAll()
+                // 🌐 Cho phép tạm toàn bộ GET request (tuỳ bạn)
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/**").permitAll()
+                // 🔒 Các endpoint còn lại cần xác thực
                 .anyRequest().authenticated()
-            );
-        
-        http.addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+            )
+            .formLogin(form -> form.disable())
+            .httpBasic(httpBasic -> httpBasic.disable());
+
+        // ✅ Thêm filter JWT vào trước UsernamePasswordAuthenticationFilter
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 }
-
-

@@ -253,7 +253,7 @@ const NewChatbot = () => {
             </button>
           </div>
           <p className="text-[var(--neutral-400)] text-xs mt-3 text-center">
-            {t('noticalAI')}
+            AI có thể mắc lỗi. Hãy tham khảo bác sĩ khi cần.
           </p>
         </div>
       </div>
