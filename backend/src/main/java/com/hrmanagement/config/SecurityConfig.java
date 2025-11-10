@@ -78,7 +78,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Cho phép các endpoint /api/auth/** (register, login) được truy cập công khai
                 .requestMatchers("/api/auth/**").permitAll()
-
+                
                 .requestMatchers("/api/user/**").authenticated()
                 // Tất cả các request khác đều cần phải xác thực
                 .anyRequest().authenticated()

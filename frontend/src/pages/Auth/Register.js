@@ -19,22 +19,44 @@ const Register = () => {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
   } = useForm();
 
   const password = watch('password');
 
   const onSubmit = async (data) => {
+    // setIsLoading(true);
+    // try {
+    //   await registerUser(data);
+    //   toast.success(t('registrationSuccess'));
+    //   navigate('/dashboard');
+    // } catch (error) {
+    //   toast.error(error.response?.data?.error || t('registrationError'));
+    // } finally {
+    //   setIsLoading(false);
+    // }
+    
     setIsLoading(true);
-    try {
-      await registerUser(data);
-      toast.success(t('registrationSuccess'));
+    const result = await registerUser(data);
+
+    if (result.success) {
       navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.response?.data?.error || t('registrationError'));
-    } finally {
-      setIsLoading(false);
-    }
+    } else {
+      const errorMessage = result.error || t('registrationError');
+      
+      if (errorMessage.includes('Email đã được sử dụng') || errorMessage.includes('email already exists')) {
+          setError('email', { 
+              type: 'manual', 
+              message: errorMessage 
+          });
+      }
+      toast.error(errorMessage);
+
+    } 
+
+    setIsLoading(false);
+    
   };
 
   // const handleGoogleLogin = () => {
@@ -50,10 +72,11 @@ const Register = () => {
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4 bg-no-repeat bg-cover bg-center"
-      style={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: '#1f2937'
-      }}
+      // style={{ 
+      //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      //   color: '#1f2937'
+      // }}
+      style={{ backgroundImage: "url('/image0.jpg')" }}
     >
       <motion.div
         className="w-full max-w-md"
