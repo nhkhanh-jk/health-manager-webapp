@@ -102,6 +102,10 @@ export const notifications = {
   logoutSuccess: () => notifySuccess('Đã đăng xuất'),
   actionFailed: (action) => notifyError(`❌ Không thể ${action}. Vui lòng thử lại.`),
   
+
+  actionSuccess: (action) => {
+    toast.success(` ${action} thành công!`);
+  },
   // AI Chat
   aiThinking: () => notifyInfo('🤖 AI đang suy nghĩ...'),
   aiError: () => notifyError('⚠️ AI không thể trả lời lúc này'),

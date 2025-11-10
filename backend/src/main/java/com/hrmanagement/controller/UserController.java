@@ -19,7 +19,7 @@ public class UserController {
     private AuthService authService; 
 
     // Endpoint 1: Lấy thông tin người dùng hiện tại
-    @GetMapping("/{id}")
+    @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(Principal principal) {
         
         String email = principal.getName(); 
