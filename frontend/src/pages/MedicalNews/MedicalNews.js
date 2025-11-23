@@ -16,92 +16,99 @@ import {
 } from "@heroicons/react/24/outline";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import axios from "axios";
+// --- MỚI: Dùng API Instance chung ---
+import api from "../../api"; 
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
+// --- HẾT CODE MỚI ---
+
+// --- HÀM HELPER (Giữ nguyên) ---
+const formatTimeAgo = (isoDate, t) => {
+  if (!isoDate) return '';
+  const now = new Date();
+  const date = new Date(isoDate);
+  const seconds = Math.floor((now - date) / 1000);
+
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + ` ${t('yearAgo') || 'năm trước'}`;
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + ` ${t('monthAgo') || 'tháng trước'}`;
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + ` ${t('dayAgo') || 'ngày trước'}`;
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + ` ${t('hourAgo') || 'giờ trước'}`;
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + ` ${t('minuteAgo') || 'phút trước'}`;
+  return Math.floor(seconds) + ` ${t('secondAgo') || 'giây trước'}`;
+};
+// --- HẾT HÀM HELPER ---
+
 
 const MedicalNews = () => {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // Giữ lại state category và sort để dùng cho Filter UI
+  const [selectedCategory, setSelectedCategory] = useState("all"); 
   const [sortBy, setSortBy] = useState("latest");
 
   const [newsData, setNewsData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --------------------------
-  // 🔹 DỮ LIỆU MẪU FALLBACK
-  // --------------------------
-  const fallbackNewsData = [
-    {
-      id: "news-1",
-      title: "Lời khuyên về sức khỏe tâm thần trong tháng nhận thức",
-      summary:
-        "Các chuyên gia chia sẻ những cách đơn giản để duy trì sức khỏe tâm thần tốt trong cuộc sống hàng ngày.",
-      author: "Dr. Emily Rodriguez",
-      publishDate: "2024-01-13",
-      category: "mental-health",
-      readTime: "4 phút",
-      image:
-        "https://suckhoedoisong.qltns.mediacdn.vn/324455921873985536/2024/10/7/photo-1728291889413-17282918904911503530724.jpeg",
-      url: "https://suckhoedoisong.vn/who-khuyen-nghi-6-loi-khuyen-de-bao-ve-suc-khoe-tam-than-169241007161038671.htm",
-      tags: ["sức khỏe tâm thần", "lời khuyên", "phòng ngừa"],
-    },
-    {
-      id: "news-2",
-      title: "Công nghệ AI trong chẩn đoán y khoa",
-      summary:
-        "Trí tuệ nhân tạo đang cách mạng hóa việc chẩn đoán bệnh với độ chính xác cao hơn và thời gian nhanh hơn.",
-      author: "Dr. James Wilson",
-      publishDate: "2024-01-12",
-      category: "technology",
-      readTime: "6 phút",
-      image:
-        "https://suckhoedoisong.qltns.mediacdn.vn/thumb_w/640/324455921873985536/2025/2/20/1-17400406601101845420807.jpg",
-      url: "https://suckhoedoisong.vn/ung-dung-tri-tue-nhan-tao-ai-trong-kham-chua-benh-co-hoi-thach-thuc-va-xu-huong-trong-tuong-lai-169250220153703507.htm",
-      tags: ["AI", "chẩn đoán", "công nghệ y tế"],
-    },
-  ];
+  // --- MỚI: XÓA DỮ LIỆU MẪU FALLBACK (Không cần thiết) ---
+  // const fallbackNewsData = [ ... ];
+  // --- HẾT CODE MỚI ---
 
   // --------------------------
-  // 🔹 GỌI API BACKEND
+  // 🔹 GỌI API BACKEND (ĐÃ SỬA LỖI)
   // --------------------------
   useEffect(() => {
     const fetchNews = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get("http://localhost:8080/api/news", {
-          params: selectedCategory !== "all" ? { category: selectedCategory } : {},
+
+        // --- SỬA LỖI: Sử dụng API instance và gọi đúng endpoint ---
+        const response = await api.get("/news", {
+          params: {
+             // Backend đang tìm theo q=health, nên ta truyền search term vào q
+             q: searchTerm || 'health', 
+             pageSize: 20 // Lấy nhiều hơn 
+          },
         });
+        // --- HẾT SỬA LỖI ---
 
         const mapped = response.data.map((item, index) => ({
           id: `news-${index + 1}`,
           title: item.title,
-          summary: item.description,
+          summary: item.description || "Không có tóm tắt.",
           content: item.description,
-          author: item.sourceName || "Nguồn tin",
+          author: item.source?.name || "Nguồn tin", // Lấy source.name
           publishDate: item.publishedAt,
-          category:
-            selectedCategory !== "all" ? selectedCategory : "general",
+          category: selectedCategory !== "all" ? selectedCategory : "general",
           readTime: "5 phút",
-          image: item.imageUrl,
+          
+          // --- SỬA LỖI 1: Sửa item.imageUrl -> item.urlToImage ---
+          image: item.urlToImage, 
+          // --- HẾT SỬA LỖI 1 ---
+          
           url: item.url,
           tags: [selectedCategory],
         }));
 
         setNewsData(mapped);
       } catch (err) {
-        console.error(err);
-        setError("Không thể tải dữ liệu tin tức. Đang hiển thị dữ liệu mẫu.");
-        setNewsData(fallbackNewsData);
+        console.error("Lỗi tải tin tức:", err);
+        setError("Không thể tải dữ liệu tin tức. Vui lòng kiểm tra API key hoặc kết nối.");
+        setNewsData([]); // Đặt rỗng nếu lỗi
       } finally {
         setLoading(false);
       }
     };
 
     fetchNews();
-  }, [selectedCategory]);
+  // Kích hoạt lại khi searchTerm thay đổi
+  }, [selectedCategory, searchTerm]); 
 
   // --------------------------
   // 🔹 FILTER + SORT
@@ -109,17 +116,15 @@ const MedicalNews = () => {
   const filteredNews = useMemo(() => {
     let filtered = newsData;
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (news) =>
-          news.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          news.summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          news.tags?.some((tag) =>
-            tag.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
+    // Lọc theo Category (chỉ lọc nếu không phải 'all', không cần gọi lại API)
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(news => news.category === selectedCategory || news.tags.includes(selectedCategory));
     }
+    
+    // Tìm kiếm đã được tích hợp vào useEffect (search term)
+    // if (searchTerm) { ... } 
 
+    // Sắp xếp
     if (sortBy === "latest") {
       filtered.sort(
         (a, b) => new Date(b.publishDate) - new Date(a.publishDate)
@@ -131,10 +136,10 @@ const MedicalNews = () => {
     }
 
     return filtered;
-  }, [newsData, searchTerm, sortBy]);
+  }, [newsData, searchTerm, sortBy, selectedCategory]);
 
   // --------------------------
-  // 🔹 CATEGORY DANH MỤC
+  // 🔹 CATEGORY DANH MỤC (Giữ nguyên)
   // --------------------------
   const categories = [
     { id: "all", name: t("allCategories") || "Tất cả" },
@@ -146,7 +151,7 @@ const MedicalNews = () => {
   ];
 
   // --------------------------
-  // 🔹 COMPONENT CARD
+  // 🔹 COMPONENT CARD (ĐÃ SỬA LỖI ẢNH)
   // --------------------------
   const NewsCard = ({ news }) => (
     <motion.div
@@ -161,14 +166,16 @@ const MedicalNews = () => {
       <div className="w-full h-48 mb-4 rounded-lg overflow-hidden">
         <img
           src={
-            news.image ||
+            // --- SỬA LỖI ẢNH: Đã dùng news.image (vốn đã được fix thành urlToImage) ---
+            // Thêm logic kiểm tra ảnh lỗi hoặc ảnh mẫu
+            (news.image && news.image !== 'null' && !news.image.includes('sitemap')) ? news.image : 
             "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400"
           }
           alt={news.title}
           className="w-full h-full object-cover"
         />
       </div>
-      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-2">
         {news.title}
       </h3>
       <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-3">
@@ -181,7 +188,7 @@ const MedicalNews = () => {
         </div>
         <div className="flex items-center">
           <CalendarIcon className="w-4 h-4 mr-1" />
-          {new Date(news.publishDate).toLocaleDateString("vi-VN")}
+          {formatTimeAgo(news.publishDate, t)}
         </div>
       </div>
     </motion.div>
@@ -272,7 +279,8 @@ const MedicalNews = () => {
       {/* NỘI DUNG */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-600)]"></div>
+          {/* Thay spinner tự custom bằng LoadingSpinner chung */}
+          <LoadingSpinner size="lg" />
         </div>
       ) : error ? (
         <div

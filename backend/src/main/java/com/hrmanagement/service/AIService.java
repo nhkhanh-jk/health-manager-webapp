@@ -2,10 +2,12 @@ package com.hrmanagement.service;
 
 import com.hrmanagement.model.AIRequest;
 import com.hrmanagement.model.AIResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -13,53 +15,74 @@ import java.util.Map;
 @Service
 public class AIService {
 
+    private final WebClient webClient;
+
     @Value("${gemini.api.key}")
     private String apiKey;
 
     @Value("${gemini.api.url}")
     private String apiUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    public AIService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.build(); 
+    }
 
-    public AIResponse getGeminiReply(AIRequest request) {
-        try {
-            // ✅ Body đúng chuẩn Gemini
-            Map<String, Object> body = Map.of(
-                "contents", List.of(
-                    Map.of("parts", List.of(
-                        Map.of("text", request.getMessage())
-                    ))
+    public AIResponse getChatbotResponse(AIRequest aiRequest) {
+        
+        // 1. CHUYỂN ĐỔI: Map AIRequest đơn giản sang JSON phức tạp của Gemini
+        Map<String, Object> geminiRequest = Map.of(
+            "contents", List.of(
+                Map.of(
+                    "parts", List.of(
+                        Map.of("text", aiRequest.getMessage())
+                    )
                 )
-            );
+            )
+        );
 
-            // ✅ Header chuẩn
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+        try {
+            // 2. Gọi API Gemini
+            Mono<Map> responseMono = webClient.post()
+                .uri(apiUrl + "?key=" + apiKey) 
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(geminiRequest)
+                .retrieve()
+                // 3. Xử lý các lỗi 4xx/5xx và log API KEY
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), response -> {
+                    response.bodyToMono(String.class).subscribe(body -> {
+                        System.err.println("GEMINI API RESPONSE ERROR STATUS: " + response.statusCode());
+                        System.err.println("GEMINI API ERROR BODY: " + body); // In ra body lỗi
+                    });
+                    
+                    if (response.statusCode().value() == 400 || response.statusCode().value() == 403) {
+                        return Mono.error(new RuntimeException("Lỗi API Gemini: 🔑 Vui lòng kiểm tra API key hoặc cấu trúc request."));
+                    }
+                    return Mono.error(new RuntimeException("Lỗi máy chủ Gemini: " + response.statusCode()));
+                })
+                .bodyToMono(Map.class); 
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-            // ✅ Gửi request đến Gemini API
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                apiUrl + "?key=" + apiKey,   // <-- đúng cách xác thực
-                entity,
-                Map.class
-            );
-
-            // ✅ Xử lý phản hồi
-            var candidates = (List<?>) response.getBody().get("candidates");
-            if (candidates == null || candidates.isEmpty()) {
-                return new AIResponse("⚠️ Không nhận được phản hồi từ Gemini API.");
+            // 4. Chặn và trả về kết quả
+            Map<String, Object> geminiResponse = responseMono.block();
+            
+            // 5. TRÍCH XUẤT: Lấy câu trả lời từ cấu trúc lồng nhau của Gemini
+            if (geminiResponse != null && geminiResponse.containsKey("candidates")) {
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) geminiResponse.get("candidates");
+                if (!candidates.isEmpty()) {
+                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+                    String replyText = (String) parts.get(0).get("text");
+                    
+                    return new AIResponse(replyText);
+                }
             }
-
-            var content = (Map<?, ?>) ((Map<?, ?>) candidates.get(0)).get("content");
-            var parts = (List<?>) content.get("parts");
-            String reply = (String) ((Map<?, ?>) parts.get(0)).get("text");
-
-            return new AIResponse(reply);
+            
+            return new AIResponse("Xin lỗi, tôi không thể trích xuất câu trả lời.");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return new AIResponse("⚠️ Lỗi khi gọi Gemini API hoặc xử lý phản hồi: " + e.getMessage());
+            System.err.println("Lỗi kết nối /xử lý AI: " + e.getMessage());
+            // Trả về lỗi chung cho frontend
+            return new AIResponse("⚠️ Xin lỗi, tôi không thể trả lời lúc này. Vui lòng thử lại."); 
         }
     }
 }

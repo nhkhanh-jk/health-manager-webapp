@@ -1,364 +1,209 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-import { notifications } from '../utils/notifications';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api'; 
+import { notifications } from '../utils/notifications'; 
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
-
-// Configure axios base URL and interceptors
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-
-// Add request interceptor to include auth token
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor to handle auth errors
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // useEffect(() => {
-  //   const initializeAuth = async () => {
-  //     const token = localStorage.getItem('token');
-  //     const userData = localStorage.getItem('user');
-
-  //     if (token && userData) {
-  //       try {
-  //         // Try to validate token with backend
-  //         const response = await axios.get('/auth/validate');
-  //         if (response.data.valid) {
-  //           setUser(JSON.parse(userData));
-  //         } else {
-  //           localStorage.removeItem('token');
-  //           localStorage.removeItem('user');
-  //         }
-  //       } catch (error) {
-  //         console.error('Token validation failed:', error);
-  //         // If backend is not available, use stored user data for demo
-  //         if (userData) {
-  //           console.warn('Backend not available, using stored user data for demo');
-  //           setUser(JSON.parse(userData));
-  //         }
-  //       }
-  //     }
-  //     setLoading(false);
-  //   };
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(true); 
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
-    
-      if (token) {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
       try {
-
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-
-        const response = await axios.get('/user/me'); 
-
-        setUser(response.data);
-        localStorage.setItem('user', JSON.stringify(response.data));
-
-        } catch (error) {
-
-        console.error('Token validation failed:', error);
+        const parsedUser = JSON.parse(storedUser);
+        
+        // --- SỬA LỖI: Map lại tên trường từ Backend (ho, ten, tuoi) sang Frontend (firstName, lastName, age) ---
+        // Để Profile.js có thể hiển thị đúng
+        const mappedUser = {
+          ...parsedUser,
+          firstName: parsedUser.ho,
+          lastName: parsedUser.ten,
+          age: parsedUser.tuoi,
+          gender: parsedUser.gioiTinh,
+          // Đảm bảo không bị lỗi undefined khi profile.js cố gắng đọc
+          tuoi: parsedUser.tuoi || 0,
+          gioiTinh: parsedUser.gioiTinh || 'Nam',
+        };
+        setUser(mappedUser);
+        setToken(storedToken);
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      } catch (error) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setUser(null);
-        }
-        }
-      setLoading(false);
-      };
-
-    initializeAuth();
+      }
+    }
+    setIsLoading(false); 
   }, []);
 
-  // const login = async (email, password) => {
-  //   try {
-  //     // Try real API first
-  //     const response = await axios.post('/auth/login', {
-  //       email,
-  //       password,
-  //     });
-
-  //     const { token, employee } = response.data;
-      
-  //     localStorage.setItem('token', token);
-  //     localStorage.setItem('user', JSON.stringify(employee));
-  //     setUser(employee);
-      
-  //     notifications.loginSuccess(employee.firstName);
-  //     return { success: true };
-  //   } catch (error) {
-  //     console.warn('Backend login failed, trying demo mode:', error.message);
-      
-  //     // Demo mode - Mock login for testing UI
-  //     const demoUsers = {
-  //       'admin@company.com': {
-  //         id: 1,
-  //         email: 'admin@company.com',
-  //         firstName: 'Admin',
-  //         lastName: 'User',
-  //         role: 'ADMIN',
-  //         department: 'IT',
-  //         position: 'System Administrator',
-  //         phoneNumber: '0123456789',
-  //         hireDate: '2020-01-01'
-  //       },
-  //       'hr@company.com': {
-  //         id: 2,
-  //         email: 'hr@company.com',
-  //         firstName: 'HR',
-  //         lastName: 'Manager',
-  //         role: 'HR',
-  //         department: 'Human Resources',
-  //         position: 'HR Manager',
-  //         phoneNumber: '0123456788',
-  //         hireDate: '2020-02-01'
-  //       },
-  //       'manager@company.com': {
-  //         id: 3,
-  //         email: 'manager@company.com',
-  //         firstName: 'Team',
-  //         lastName: 'Manager',
-  //         role: 'MANAGER',
-  //         department: 'Engineering',
-  //         position: 'Team Lead',
-  //         phoneNumber: '0123456787',
-  //         hireDate: '2020-03-01'
-  //       },
-  //       'employee@company.com': {
-  //         id: 4,
-  //         email: 'employee@company.com',
-  //         firstName: 'John',
-  //         lastName: 'Doe',
-  //         role: 'EMPLOYEE',
-  //         department: 'Engineering',
-  //         position: 'Software Developer',
-  //         phoneNumber: '0123456786',
-  //         hireDate: '2021-01-01'
-  //       }
-  //     };
-
-  //     const demoPasswords = {
-  //       'admin@company.com': 'admin123',
-  //       'hr@company.com': 'hr123',
-  //       'manager@company.com': 'manager123',
-  //       'employee@company.com': 'emp123'
-  //     };
-
-  //     if (demoUsers[email] && demoPasswords[email] === password) {
-  //       const user = demoUsers[email];
-  //       const token = 'demo-token-' + Date.now();
-        
-  //       localStorage.setItem('token', token);
-  //       localStorage.setItem('user', JSON.stringify(user));
-  //       setUser(user);
-        
-  //       notifications.loginSuccess(`${user.firstName} (Demo Mode)`);
-  //       return { success: true };
-  //     } else {
-  //       const message = 'Email hoặc mật khẩu không đúng';
-  //       notifications.actionFailed('đăng nhập');
-  //       return { success: false, error: message };
-  //     }
-  //   }
-  // };
-
-const login = async (email, password) => {
-   try {
-     const loginResponse = await axios.post('/auth/login', {
-      email: email,
-      matKhau: password, 
-      });
-
-     const { accessToken } = loginResponse.data; 
-     
-     localStorage.setItem('token', accessToken);
-
-      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-      const userResponse = await axios.get('/user/me');
-      
-      const employee = userResponse.data; 
-
-     localStorage.setItem('user', JSON.stringify(employee));
-     setUser(employee);
-     
-     notifications.loginSuccess(employee.ten); 
-     return { success: true };
-
-   } catch (error) {
-
-    console.warn('Backend login failed, trying demo mode:', error.message);
-  
-    const message = 'Email hoặc mật khẩu không đúng';
-    notifications.actionFailed('đăng nhập');
-    return { success: false, error: message };
-    }
-  };
-
-  // const register = async (userData) => {
-  //   try {
-  //     setLoading(true);
-      
-  //     // For demo purposes, we'll create a new user
-  //     // In a real app, this would make an API call to your backend
-  //     const newUser = {
-  //       id: Date.now(), // Simple ID generation for demo
-  //       firstName: userData.firstName,
-  //       lastName: userData.lastName,
-  //       email: userData.email,
-  //       role: 'USER',
-  //       department: 'Health',
-  //       position: 'Health Tracker',
-  //       isActive: true,
-  //       weight: 70, // Default values
-  //       height: 170,
-  //       bloodGroup: 'A+',
-  //       age: userData.age,
-  //       gender: userData.gender
-  //     };
-      
-  //     setUser(newUser);
-  //     localStorage.setItem('user', JSON.stringify(newUser));
-      
-  //     return { success: true };
-  //   } catch (error) {
-  //     console.error('Registration error:', error);
-  //     throw error;
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-const register = async (userData) => {
-  setLoading(true);
-  try {
-    const dataToSend = {
-      ten: userData.firstName,
-      ho: userData.lastName,
-      email: userData.email,
-      matKhau: userData.password,
-      tuoi: parseInt(userData.age),
-      gioiTinh: userData.gender
+  // Hàm xử lý chung sau khi đăng nhập/đăng ký thành công
+  const handleAuthSuccess = (data) => {
+    const { token, user } = data; 
+    
+    // Map lại user từ Backend sang Frontend
+    const mappedUser = {
+        ...user,
+        firstName: user.ho,
+        lastName: user.ten,
+        age: user.tuoi,
+        gender: user.gioiTinh,
+        tuoi: user.tuoi || 0,
+        gioiTinh: user.gioiTinh || 'Nam',
     };
 
-    const response = await axios.post('/auth/register', dataToSend);
+    setToken(token);
+    setUser(mappedUser);
 
-    if (response.status === 200 || response.status === 201) {
-      notifications.actionSuccess('Đăng ký');
-      return { success: true, message: response.data?.message || 'Đăng ký thành công' };
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(mappedUser));
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+    navigate('/dashboard');
+    notifications.loginSuccess(user.ho || user.email);
+  };
+
+  const login = async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, matKhau: password }); // Sửa password -> matKhau
+      handleAuthSuccess(response.data);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+      return { success: false, error: errorMessage };
     }
+  };
 
-    return { success: false, error: 'Phản hồi không hợp lệ từ server' };
-
-  } catch (error) {
-    let errorMessage = 'Đăng ký thất bại. Vui lòng thử lại.';
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
+  const register = async (userData) => {
+    try {
+      // Dữ liệu đã được map đúng ho, ten, matKhau, tuoi, gioiTinh trong Register.js
+      const response = await api.post('/auth/register', userData);
+      //handleAuthSuccess(response.data);
+      notifications.actionSuccess("Đăng ký");
+      navigate('/login');
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
+      return { success: false, error: errorMessage };
     }
-    return { success: false, error: errorMessage };
-  } finally {
-    setLoading(false);
-  }
+  };
+
+  // --- MỚI: Thêm hàm cập nhật hồ sơ thật ---
+  const updateUser = async (payload) => {
+    try {
+        // Gửi payload tới endpoint PUT /api/user/{id}
+        const response = await api.put(`/user/${payload.id}`, payload);
+
+        const updatedUser = response.data;
+        
+        // Map lại user từ Backend và cập nhật local state
+        const mappedUser = {
+            ...updatedUser,
+            firstName: updatedUser.ho,
+            lastName: updatedUser.ten,
+            age: updatedUser.tuoi,
+            gender: updatedUser.gioiTinh,
+            tuoi: updatedUser.tuoi || 0,
+            gioiTinh: updatedUser.gioiTinh || 'Nam',
+        };
+
+        setUser(mappedUser);
+        localStorage.setItem('user', JSON.stringify(mappedUser));
+
+        return { success: true };
+    } catch (error) {
+        // Log lỗi chi tiết nếu có
+        console.error("Lỗi cập nhật hồ sơ:", error.response);
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Không thể cập nhật hồ sơ. Vui lòng thử lại.';
+        return { success: false, error: errorMessage };
+    }
+  };
+
+  // xóa tài khoản
+
+  const deleteUser = async () => {
+    if (!user || !user.id) {
+        return { success: false, error: 'Người dùng chưa đăng nhập.' };
+    }
+    const userId = user.id;
+
+    try {
+        await api.delete(`/user/${userId}`);
+        
+        // BƯỚC QUAN TRỌNG: Đăng xuất người dùng sau khi xóa tài khoản
+        logout(); 
+        notifications.deleteAccountSuccess("Tài khoản đã được xóa thành công."); 
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Lỗi khi xóa tài khoản:", error.response);
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Không thể xóa tài khoản. Vui lòng thử lại.';
+        return { success: false, error: errorMessage };
+    }
 };
+  // --- HẾT CODE MỚI ---
+
+  const updatePassword = async (currentPassword, newPassword) => {
+    // 1. Kiểm tra User đang đăng nhập
+    if (!user || !user.id) {
+        return { success: false, error: 'Người dùng chưa đăng nhập.' };
+    }
+    
+    const userId = user.id; // Lấy ID của người dùng từ state hiện tại
+
+    try {
+        // Gửi yêu cầu PUT tới endpoint đổi mật khẩu (Backend đã cấu hình)
+        const response = await api.put(`/user/${userId}/password`, { 
+            currentPassword: currentPassword,
+            newPassword: newPassword // Phải khớp với tên trường 'newPassword' trong DTO (PasswordUpdateRequest) của Backend
+        });
+
+        notifications.changedPasswordSuccess("Đổi mật khẩu thành công!");
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Lỗi cập nhật mật khẩu:", error.response);
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Không thể cập nhật mật khẩu. Vui lòng thử lại.';
+        return { success: false, error: errorMessage };
+    }
+};
+// --- HẾT CODE MỚI ---
 
   const logout = () => {
+    setUser(null);
+    setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
-    notifications.logoutSuccess();
-  };
-
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-  };
-
-  // Role-based permission functions
-  const hasRole = (role) => {
-    return user?.role === role;
-  };
-
-  const hasAnyRole = (roles) => {
-    return roles.includes(user?.role);
-  };
-
-  const canManageEmployees = () => {
-    return hasAnyRole(['ADMIN', 'HR', 'MANAGER']);
-  };
-
-  const canApproveAbsences = () => {
-    return hasAnyRole(['ADMIN', 'HR', 'MANAGER']);
-  };
-
-  const canAccessDocuments = () => {
-    return user !== null; // All authenticated users can access documents
-  };
-
-  const canManageDocuments = () => {
-    return hasAnyRole(['ADMIN', 'HR']);
-  };
-
-  const canViewAllEmployees = () => {
-    return hasAnyRole(['ADMIN', 'HR', 'MANAGER']);
-  };
-
-  const canEditProfile = () => {
-    return user !== null;
+    delete api.defaults.headers.common['Authorization'];
+    navigate('/login');
+    //notifications.logoutSuccess();
   };
 
   const value = {
     user,
-    loading,
+    token,
+    isLoading,
     login,
     register,
     logout,
     updateUser,
-    hasRole,
-    hasAnyRole,
-    canManageEmployees,
-    canApproveAbsences,
-    canAccessDocuments,
-    canManageDocuments,
-    canViewAllEmployees,
-    canEditProfile,
+    updatePassword,
+    deleteUser, // Cung cấp hàm mới
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;

@@ -23,23 +23,23 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            logger.info("🔍 Checking for demo user...");
+            logger.info(" Checking for demo user...");
             // Tạo user demo nếu chưa tồn tại
             userRepository.findByEmail("admin@company.com").ifPresentOrElse(existing -> {
-                logger.info("📋 Demo user found, checking password...");
+                logger.info(" Demo user found, checking password...");
                 if (!passwordEncoder.matches("admin123", existing.getMatKhau())) {
                     existing.setMatKhau(passwordEncoder.encode("admin123"));
                     userRepository.save(existing);
-                    logger.info("✅ Demo user password reset to default credentials.");
+                    logger.info(" Demo user password reset to default credentials.");
                     logger.info("   Email: admin@company.com");
                     logger.info("   Password: admin123");
                 } else {
-                    logger.info("✅ Demo user already exists with correct password.");
+                    logger.info(" Demo user already exists with correct password.");
                     logger.info("   Email: admin@company.com");
                     logger.info("   Password: admin123");
                 }
             }, () -> {
-                logger.info("📝 Creating new demo user...");
+                logger.info(" Creating new demo user...");
                 User adminUser = new User();
                 adminUser.setHo("Admin");
                 adminUser.setTen("User");
@@ -49,12 +49,12 @@ public class DataInitializer implements CommandLineRunner {
                 adminUser.setGioiTinh("Nam");
 
                 userRepository.save(adminUser);
-                logger.info("✅ Demo user created successfully!");
+                logger.info(" Demo user created successfully!");
                 logger.info("   Email: admin@company.com");
                 logger.info("   Password: admin123");
             });
         } catch (Exception e) {
-            logger.error("❌ Error initializing demo user: ", e);
+            logger.error(" Error initializing demo user: ", e);
         }
     }
 }

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useMutation } from 'react-query';
+import React, { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useMutation } from "react-query";
 import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
@@ -9,40 +9,47 @@ import {
   BeakerIcon,
   MoonIcon,
   FireIcon,
-} from '@heroicons/react/24/outline';
-import axios from 'axios';
-import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
-import LoadingSpinner from '../../components/UI/LoadingSpinner';
+} from "@heroicons/react/24/outline";
+import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
 
-const API_BASE_URL = 'http://localhost:8080/api'; // ✅ backend base
+const API_BASE_URL = "http://localhost:8080/api"; //  backend base
 
 const NewChatbot = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // ✅ gọi đúng endpoint backend
   const chatMutation = useMutation(
     (message) =>
-      axios.post(`${API_BASE_URL}/ai/chat`, { message }, {
-        headers: { 'Content-Type': 'application/json' },
-      }),
+      axios.post(
+        `${API_BASE_URL}/ai/chat`,
+        { message },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      ),
     {
       onSuccess: (response) => {
-        const aiText = response.data.content || response.data.reply || 'Tôi đã nhận được tin nhắn của bạn.';
+        const aiText =
+          response.data.content ||
+          response.data.reply ||
+          "Tôi đã nhận được tin nhắn của bạn.";
         setMessages((prev) => [
           ...prev,
           {
             id: Date.now() + 1,
             text: aiText,
-            sender: 'ai',
+            sender: "ai",
             timestamp: new Date(),
           },
         ]);
@@ -52,8 +59,8 @@ const NewChatbot = () => {
           ...prev,
           {
             id: Date.now() + 1,
-            text: '⚠️ Xin lỗi, tôi không thể trả lời lúc này. Vui lòng thử lại.',
-            sender: 'ai',
+            text: "⚠️ Xin lỗi, tôi không thể trả lời lúc này. Vui lòng thử lại.",
+            sender: "ai",
             timestamp: new Date(),
             isError: true,
           },
@@ -69,34 +76,34 @@ const NewChatbot = () => {
       {
         id: Date.now(),
         text: msg,
-        sender: 'user',
+        sender: "user",
         timestamp: new Date(),
       },
     ]);
-    setInputMessage('');
+    setInputMessage("");
     chatMutation.mutate(msg);
   };
 
   const quickQuestions = [
     {
       icon: HeartIcon,
-      text: 'Tôi nên tập cardio bao lâu mỗi ngày?',
-      color: 'from-[var(--primary-600)] to-[var(--primary-700)]',
+      text: "Tôi nên tập cardio bao lâu mỗi ngày?",
+      color: "from-[var(--primary-600)] to-[var(--primary-700)]",
     },
     {
       icon: BeakerIcon,
-      text: 'Gợi ý lịch uống thuốc hợp lý',
-      color: 'from-[var(--accent-600)] to-[var(--accent-700)]',
+      text: "Gợi ý lịch uống thuốc hợp lý",
+      color: "from-[var(--accent-600)] to-[var(--accent-700)]",
     },
     {
       icon: FireIcon,
-      text: 'Chế độ ăn để giảm cân an toàn?',
-      color: 'from-[#FB923C] to-[#F59E0B]',
+      text: "Chế độ ăn để giảm cân an toàn?",
+      color: "from-[#FB923C] to-[#F59E0B]",
     },
     {
       icon: MoonIcon,
-      text: 'Mẹo ngủ ngon và đúng giờ?',
-      color: 'from-[#8B5CF6] to-[#A78BFA]',
+      text: "Mẹo ngủ ngon và đúng giờ?",
+      color: "from-[#8B5CF6] to-[#A78BFA]",
     },
   ];
 
@@ -108,11 +115,11 @@ const NewChatbot = () => {
           <ChatBubbleLeftRightIcon className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="h1">{t('healthAssistant')}</h1>
+          <h1 className="h1">{t("healthAssistant")}</h1>
           <p className="subtitle">
-            {t('language') === 'vi'
-              ? 'Lưu ý: Đây không phải lời khuyên y khoa chuyên môn'
-              : 'Note: This is not professional medical advice'}
+            {t("language") === "vi"
+              ? "Lưu ý: Đây không phải lời khuyên y khoa chuyên môn"
+              : "Note: This is not professional medical advice"}
           </p>
         </div>
       </div>
@@ -126,9 +133,9 @@ const NewChatbot = () => {
                 <SparklesIcon className="w-10 h-10 text-white" />
               </div>
               <h2 className="h2 mb-3">
-                {t('welcome')}, {user?.firstName}!
+                {t("welcome")}, {user?.firstName}!
               </h2>
-              <p className="subtitle mb-6 max-w-md">{t('askMeAnything')}</p>
+              <p className="subtitle mb-6 max-w-md">{t("askMeAnything")}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
                 {quickQuestions.map((q, i) => (
                   <button
@@ -147,25 +154,27 @@ const NewChatbot = () => {
               {messages.map((msg) => (
                 <motion.div
                   key={msg.id}
-                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${
+                    msg.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <div
                     className={`max-w-[80%] ${
-                      msg.sender === 'user' ? 'flex flex-row-reverse' : 'flex'
+                      msg.sender === "user" ? "flex flex-row-reverse" : "flex"
                     } items-start space-x-3`}
                   >
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        msg.sender === 'user'
-                          ? 'bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)]'
+                        msg.sender === "user"
+                          ? "bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)]"
                           : msg.isError
-                          ? 'bg-[var(--status-danger)]'
-                          : 'bg-gradient-to-br from-[var(--accent-600)] to-[var(--accent-700)]'
+                          ? "bg-[var(--status-danger)]"
+                          : "bg-gradient-to-br from-[var(--accent-600)] to-[var(--accent-700)]"
                       }`}
                     >
-                      {msg.sender === 'user' ? (
+                      {msg.sender === "user" ? (
                         <span className="text-white font-semibold text-xs">
                           {user?.firstName?.charAt(0)}
                         </span>
@@ -175,24 +184,26 @@ const NewChatbot = () => {
                     </div>
                     <div
                       className={`rounded-2xl px-4 py-3 ${
-                        msg.sender === 'user'
-                          ? 'bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)] text-white'
+                        msg.sender === "user"
+                          ? "bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)] text-white"
                           : msg.isError
-                          ? 'bg-red-50 text-[var(--status-danger)] border border-red-200'
-                          : 'bg-[var(--neutral-50)] text-[var(--neutral-800)] border border-[var(--neutral-200)]'
+                          ? "bg-red-50 text-[var(--status-danger)] border border-red-200"
+                          : "bg-[var(--neutral-50)] text-[var(--neutral-800)] border border-[var(--neutral-200)]"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {msg.text}
+                      </p>
                       <p
                         className={`text-xs mt-2 ${
-                          msg.sender === 'user'
-                            ? 'text-white/70'
-                            : 'text-[var(--neutral-500)]'
+                          msg.sender === "user"
+                            ? "text-white/70"
+                            : "text-[var(--neutral-500)]"
                         }`}
                       >
-                        {msg.timestamp.toLocaleTimeString('vi-VN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
+                        {msg.timestamp.toLocaleTimeString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </p>
                     </div>
@@ -211,11 +222,11 @@ const NewChatbot = () => {
                         <div className="w-2 h-2 bg-[var(--neutral-400)] rounded-full animate-bounce" />
                         <div
                           className="w-2 h-2 bg-[var(--neutral-400)] rounded-full animate-bounce"
-                          style={{ animationDelay: '150ms' }}
+                          style={{ animationDelay: "150ms" }}
                         />
                         <div
                           className="w-2 h-2 bg-[var(--neutral-400)] rounded-full animate-bounce"
-                          style={{ animationDelay: '300ms' }}
+                          style={{ animationDelay: "300ms" }}
                         />
                       </div>
                     </div>
@@ -234,9 +245,9 @@ const NewChatbot = () => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) =>
-                e.key === 'Enter' && !e.shiftKey && handleSend()
+                e.key === "Enter" && !e.shiftKey && handleSend()
               }
-              placeholder={t('typeMessage')}
+              placeholder={t("typeMessage")}
               className="input flex-1"
               disabled={chatMutation.isLoading}
             />

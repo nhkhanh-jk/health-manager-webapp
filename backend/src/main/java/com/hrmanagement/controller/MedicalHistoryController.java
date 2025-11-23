@@ -1,64 +1,54 @@
 package com.hrmanagement.controller;
 
 import com.hrmanagement.model.MedicalHistory;
-import com.hrmanagement.repository.MedicalHistoryRepository;
+import com.hrmanagement.service.MedicalHistoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/medical")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/health/medical-history")
 public class MedicalHistoryController {
 
-    private final MedicalHistoryRepository repository;
+    @Autowired
+    private MedicalHistoryService medicalHistoryService;
 
-    public MedicalHistoryController(MedicalHistoryRepository repository) {
-        this.repository = repository;
-    }
-
-    // 🟢 Lấy tất cả bản ghi
-    @GetMapping
-    public List<MedicalHistory> getAll() {
-        return repository.findAll();
-    }
-
-    // 🟢 Lấy 1 bản ghi
-    @GetMapping("/{id}")
-    public ResponseEntity<MedicalHistory> getById(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // 🟢 Thêm mới
+    // API: POST /api/health/medical-history
+    // Dùng để tạo bản ghi lịch sử bệnh lý mới
     @PostMapping
-    public MedicalHistory create(@RequestBody MedicalHistory medicalHistory) {
-        return repository.save(medicalHistory);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MedicalHistory> createMedicalHistory(@RequestBody MedicalHistory history) {
+        MedicalHistory newHistory = medicalHistoryService.createHistoryRecord(history);
+        return ResponseEntity.ok(newHistory);
     }
 
-    // 🟡 Cập nhật
+    // API: GET /api/health/medical-history
+    // Dùng để lấy TẤT CẢ lịch sử bệnh lý của người dùng hiện tại (cho Dashboard và trang list)
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<MedicalHistory>> getAllMedicalHistory() {
+        List<MedicalHistory> historyList = medicalHistoryService.getAllHistoryForCurrentUser();
+        return ResponseEntity.ok(historyList);
+    }
+    
+    // API: PUT /api/health/medical-history/{id}
+    // Dùng để cập nhật bản ghi lịch sử bệnh lý
     @PutMapping("/{id}")
-    public ResponseEntity<MedicalHistory> update(@PathVariable Long id, @RequestBody MedicalHistory updated) {
-        return repository.findById(id)
-                .map(existing -> {
-                    existing.setDate(updated.getDate());
-                    existing.setTitle(updated.getTitle());
-                    existing.setNotes(updated.getNotes());
-                    repository.save(existing);
-                    return ResponseEntity.ok(existing);
-                })
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MedicalHistory> updateMedicalHistory(@PathVariable Long id, @RequestBody MedicalHistory historyDetails) {
+        MedicalHistory updatedHistory = medicalHistoryService.updateHistoryRecord(id, historyDetails);
+        return ResponseEntity.ok(updatedHistory);
     }
-
-    // 🔴 Xóa
+    
+    // API: DELETE /api/health/medical-history/{id}
+    // Dùng để xóa bản ghi
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteMedicalHistory(@PathVariable Long id) {
+        medicalHistoryService.deleteHistoryRecord(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -23,7 +23,7 @@ const NewLogin = () => {
     register,
     handleSubmit,
     formState: { errors },
-    setError
+    setError // --- MỚI: Đã có sẵn, sẽ dùng để set lỗi từ API ---
   } = useForm();
 
   const onSubmit = async (data) => {
@@ -31,8 +31,13 @@ const NewLogin = () => {
     const result = await login(data.email, data.password);
     
     if (!result.success) {
-      setError('root', { message: result.error });
+      // --- MỚI: Hiển thị lỗi API (ví dụ: "Sai mật khẩu") ---
+      // Chúng ta sẽ đảm bảo AuthContext trả về lỗi này
+      const errorMessage = result.error || (language === 'vi' ? 'Email hoặc mật khẩu không đúng' : 'Invalid email or password');
+      setError('root', { message: errorMessage });
+      // --- HẾT CODE MỚI ---
     }
+    // Nếu success, AuthContext sẽ tự động điều hướng đi
     setIsLoading(false);
   };
 
@@ -232,17 +237,13 @@ const NewLogin = () => {
             
           </form>
 
-          {/* Demo Credentials */}
+          {/* Demo Credentials (Giữ nguyên, bị comment) */}
           {/* <div className="mt-6 p-4 bg-[var(--neutral-50)] rounded-lg border border-[var(--neutral-200)]">
-            <h3 className="text-[var(--neutral-700)] font-semibold mb-2 text-sm">Demo Account</h3>
-            <div className="space-y-1 text-xs text-[var(--neutral-600)]">
-              <p><strong>Email:</strong> admin@company.com</p>
-              <p><strong>Password:</strong> admin123</p>
-            </div>
+            ...
           </div> */}
         </motion.div>
 
-        {/* Register Link */}
+        {/* Register Link (Giữ nguyên) */}
         <motion.div 
           className="text-center mt-6"
           initial={{ opacity: 0 }}
@@ -261,7 +262,7 @@ const NewLogin = () => {
           </p>
         </motion.div>
 
-        {/* Footer */}
+        {/* Footer (Giữ nguyên) */}
         <motion.div 
           className="text-center mt-4"
           initial={{ opacity: 0 }}
@@ -278,4 +279,3 @@ const NewLogin = () => {
 };
 
 export default NewLogin;
-

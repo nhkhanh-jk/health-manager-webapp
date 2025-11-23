@@ -4,45 +4,31 @@ import com.hrmanagement.model.NewsArticle;
 import com.hrmanagement.service.MedicalNewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam; // --- MỚI: Import ---
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
-
-/**
- * Controller RESTful phục vụ API tin tức y tế cho frontend
- */
 @RestController
-@RequestMapping("/news")
-@CrossOrigin(origins = "*") // Cho phép frontend gọi từ localhost:3000
+@RequestMapping("/api/news") 
 public class MedicalNewsController {
 
     @Autowired
     private MedicalNewsService medicalNewsService;
 
     /**
-     * API: GET /api/news
-     * Optional param: category
+     * Sửa: Endpoint này giờ chấp nhận 'limit' (ví dụ: /api/news?limit=10)
+     * Dashboard sẽ gọi: /api/news?limit=2
+     * Trang News sẽ gọi: /api/news?limit=20
      */
     @GetMapping
     public ResponseEntity<List<NewsArticle>> getMedicalNews(
-            @RequestParam(required = false) String category) {
-
-        List<NewsArticle> articles = medicalNewsService.getMedicalNews(category);
+            @RequestParam(defaultValue = "10") int limit) { // --- MỚI: Thêm tham số limit ---
+        
+        // Truyền limit vào service
+        List<NewsArticle> articles = medicalNewsService.fetchTopMedicalNews(limit); 
         return ResponseEntity.ok(articles);
-    }
-
-    /**
-     * Kiểm tra API còn hoạt động hay không
-     */
-    @GetMapping("/health")
-    public ResponseEntity<?> healthCheck() {
-        return ResponseEntity.ok(
-                Map.of(
-                        "status", "MedicalNews service is running ✅",
-                        "source", "NewsAPI.org"
-                )
-        );
     }
 }

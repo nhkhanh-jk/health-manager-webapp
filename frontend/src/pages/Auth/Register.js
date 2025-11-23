@@ -6,6 +6,9 @@ import { EyeIcon, EyeSlashIcon, UserIcon, EnvelopeIcon, LockClosedIcon } from '@
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import toast from 'react-hot-toast';
+// --- MỚI: Thêm Spinner ---
+import LoadingSpinner from '../../components/UI/LoadingSpinner'; 
+// --- HẾT CODE MỚI ---
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,25 +26,17 @@ const Register = () => {
     formState: { errors },
   } = useForm();
 
-  const password = watch('password');
+  // --- SỬA LỖI: Đổi 'password' thành 'matKhau' để khớp backend ---
+  const password = watch('matKhau'); 
+  // const password = watch('password'); // --- CŨ ---
 
   const onSubmit = async (data) => {
-    // setIsLoading(true);
-    // try {
-    //   await registerUser(data);
-    //   toast.success(t('registrationSuccess'));
-    //   navigate('/dashboard');
-    // } catch (error) {
-    //   toast.error(error.response?.data?.error || t('registrationError'));
-    // } finally {
-    //   setIsLoading(false);
-    // }
     
     setIsLoading(true);
-    const result = await registerUser(data);
+    const result = await registerUser(data); // data bây giờ sẽ có { ho, ten, matKhau, ... }
 
     if (result.success) {
-      navigate('/dashboard');
+      //navigate('/dashboard'); 
     } else {
       const errorMessage = result.error || t('registrationError');
       
@@ -59,23 +54,9 @@ const Register = () => {
     
   };
 
-  // const handleGoogleLogin = () => {
-  //   // TODO: Implement Google OAuth
-  //   toast.info(t('googleLoginComingSoon'));
-  // };
-
-  // const handleFacebookLogin = () => {
-  //   // TODO: Implement Facebook OAuth
-  //   toast.info(t('facebookLoginComingSoon'));
-  // };
-
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4 bg-no-repeat bg-cover bg-center"
-      // style={{ 
-      //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      //   color: '#1f2937'
-      // }}
       style={{ backgroundImage: "url('/image0.jpg')" }}
     >
       <motion.div
@@ -119,7 +100,8 @@ const Register = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name Fields */}
+            
+            {/* --- SỬA LỖI: Đổi 'firstName' -> 'ho' --- */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
@@ -128,17 +110,17 @@ const Register = () => {
                 <div className="relative">
                   <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)]" />
                   <input
-                    {...register('firstName', { required: t('firstNameRequired') })}
-                    //className="input pl-10"
+                    {...register('ho', { required: t('firstNameRequired') })}
                     className="w-full border border-gray-200 rounded-lg py-3 pl-10 pr-4 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                     placeholder={t('enterFirstName')}
                   />
                 </div>
-                {errors.firstName && (
-                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.firstName.message}</p>
+                {errors.ho && (
+                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.ho.message}</p>
                 )}
               </div>
 
+              {/* --- SỬA LỖI: Đổi 'lastName' -> 'ten' --- */}
               <div>
                 <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
                   {t('lastName')}
@@ -146,19 +128,18 @@ const Register = () => {
                 <div className="relative">
                   <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)]" />
                   <input
-                    {...register('lastName', { required: t('lastNameRequired') })}
-                    //className="input pl-10"
+                    {...register('ten', { required: t('lastNameRequired') })}
                     className="w-full border border-gray-200 rounded-lg py-3 pl-10 pr-4 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                     placeholder={t('enterLastName')}
                   />
                 </div>
-                {errors.lastName && (
-                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.lastName.message}</p>
+                {errors.ten && (
+                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.ten.message}</p>
                 )}
               </div>
             </div>
 
-            {/* Email */}
+            {/* Email (Đã đúng) */}
             <div>
               <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
                 {t('email')}
@@ -174,7 +155,6 @@ const Register = () => {
                     }
                   })}
                   type="email"
-                  //className="input pl-10"
                   className="w-full border border-gray-200 rounded-lg py-3 pl-10 pr-4 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                   placeholder={t('enterEmail')}
                 />
@@ -184,7 +164,7 @@ const Register = () => {
               )}
             </div>
 
-            {/* Password */}
+            {/* --- SỬA LỖI: Đổi 'password' -> 'matKhau' --- */}
             <div>
               <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
                 {t('Password')}
@@ -192,7 +172,7 @@ const Register = () => {
               <div className="relative">
                 <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)]" />
                 <input
-                  {...register('password', {
+                  {...register('matKhau', {
                     required: t('passwordRequired'),
                     minLength: {
                       value: 6,
@@ -200,7 +180,6 @@ const Register = () => {
                     }
                   })}
                   type={showPassword ? 'text' : 'password'}
-                  //className="input pl-10 pr-10"
                   className="w-full border border-gray-200 rounded-lg py-3 pl-10 pr-4 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                   placeholder={t('enterPassword')}
                 />
@@ -216,12 +195,12 @@ const Register = () => {
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-[var(--status-danger)] text-xs mt-1">{errors.password.message}</p>
+              {errors.matKhau && (
+                <p className="text-[var(--status-danger)] text-xs mt-1">{errors.matKhau.message}</p>
               )}
             </div>
 
-            {/* Confirm Password */}
+            {/* --- SỬA LỖI: Đổi 'confirmPassword' -> 'xacNhanMatKhau' (và logic validate) --- */}
             <div>
               <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
                 {t('confirmPassword')}
@@ -229,12 +208,11 @@ const Register = () => {
               <div className="relative">
                 <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)]" />
                 <input
-                  {...register('confirmPassword', {
+                  {...register('xacNhanMatKhau', {
                     required: t('confirmPasswordRequired'),
-                    validate: value => value === password || t('passwordsDoNotMatch')
+                    validate: value => value === password || t('passwordsDoNotMatch') // 'password' này là biến watch('matKhau') ở trên
                   })}
                   type={showConfirmPassword ? 'text' : 'password'}
-                  //className="input pl-10 pr-10"
                   className="w-full border border-gray-200 rounded-lg py-3 pl-10 pr-4 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                   placeholder={t('confirmPassword')}
                 />
@@ -250,12 +228,12 @@ const Register = () => {
                   )}
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="text-[var(--status-danger)] text-xs mt-1">{errors.confirmPassword.message}</p>
+              {errors.xacNhanMatKhau && (
+                <p className="text-[var(--status-danger)] text-xs mt-1">{errors.xacNhanMatKhau.message}</p>
               )}
             </div>
 
-            {/* Health Info */}
+            {/* --- SỬA LỖI: Đổi 'age' -> 'tuoi' và 'gender' -> 'gioiTinh' --- */}
             <div className="grid grid-cols-2 gap-4">
               {/* age */}
               <div>
@@ -263,18 +241,18 @@ const Register = () => {
                   {t('age')}
                 </label>
                 <input
-                  {...register('age', { 
+                  {...register('tuoi', { 
                     required: t('ageRequired'),
+                    valueAsNumber: true, // Đảm bảo gửi đi là số
                     min: { value: 1, message: t('invalidAge') },
                     max: { value: 120, message: t('invalidAge') }
                   })}
                   type="number"
-                  //className="input"
                   className="w-full border border-gray-200 rounded-lg py-3 px-4 text-[var(--neutral-800)] placeholder-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200 [appearance:textfield]"
                   placeholder={t('inputAge')}
                 />
-                {errors.age && (
-                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.age.message}</p>
+                {errors.tuoi && (
+                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.tuoi.message}</p>
                 )}
               </div>
 
@@ -283,84 +261,39 @@ const Register = () => {
                 <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">
                   {t('gender')}
                 </label>
-
                 <select
-                  {...register('gender', { required: t('genderRequired') })}
-                  className="input"
+                  {...register('gioiTinh', { required: t('genderRequired') })}
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-[var(--neutral-800)] placeholder-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
                 >  
-                  {/* <option value="">{t('selectGender')}</option> */}
                   <option value="male">{t('male')}</option>
                   <option value="female">{t('female')}</option>
                   <option value="other">{t('other')}</option>
                 </select>
-                {errors.gender && (
-                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.gender.message}</p>
+                {errors.gioiTinh && (
+                  <p className="text-[var(--status-danger)] text-xs mt-1">{errors.gioiTinh.message}</p>
                 )}
               </div>
             </div>
+            {/* --- HẾT SỬA LỖI --- */}
 
             {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={isLoading}
-              //className="btn btn-primary w-full flex items-center justify-center space-x-2"
               className="w-full flex items-center justify-center space-x-2 bg-gradient-to-br from-sky-300 to-blue-400 text-white font-medium py-3 rounded-lg shadow-md hover:from-sky-400 hover:to-blue-500 transition-all duration-300"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                // --- SỬA LỖI: Dùng Spinner thay vì div xoay ---
+                <LoadingSpinner size="sm" />
               ) : (
                 <>
-                  {/* <HeartIcon className="w-5 h-5" /> */}
                   <span>{t('createAcc')}</span>
                 </>
               )}
             </motion.button>
           </form>
-
-          {/* Divider */}
-
-          {/* <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--neutral-200)]" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-[var(--neutral-500)]">{t('orContinueWith')}</span>
-            </div>
-          </div> */}
-
-          {/* Social Login */}
-
-          {/* <div className="space-y-3">
-            <motion.button
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center space-x-3 px-4 py-3 border border-[var(--neutral-200)] rounded-lg hover:bg-[var(--neutral-50)] transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span className="text-[var(--neutral-700)] font-medium">{t('continueWithGoogle')}</span>
-            </motion.button>
-
-            <motion.button
-              onClick={handleFacebookLogin}
-              className="w-full flex items-center justify-center space-x-3 px-4 py-3 border border-[var(--neutral-200)] rounded-lg hover:bg-[var(--neutral-50)] transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              <span className="text-[var(--neutral-700)] font-medium">{t('continueWithFacebook')}</span>
-            </motion.button>
-          </div> */}
-
 
           {/* Login Link */}
           <div className="text-center mt-6">
