@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MagnifyingGlassIcon,
   BellIcon,
@@ -10,37 +10,46 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
-  GlobeAltIcon, // 🔸 Added for language toggle
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { useLanguage } from '../../contexts/LanguageContext';
+  GlobeAltIcon, //  Added for language toggle
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useNotifications } from "../../contexts/NotificationContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 // Thêm ICON mới: VI và EN
-import LanguageVieIcon from '../../icons/LanguageVieIcon';
-import LanguageEngIcon from '../../icons/LanguageEngIcon';
-
+import LanguageVieIcon from "../../icons/LanguageVieIcon";
+import LanguageEngIcon from "../../icons/LanguageEngIcon";
 
 const Topbar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { notifications: notifList, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
+  const {
+    notifications: notifList,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications();
   const { t, language, changeLanguage } = useLanguage(); // 🔸 lấy language
   const navigate = useNavigate();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
   const searchRef = useRef(null);
   const [notifPosition, setNotifPosition] = useState({ top: 0, right: 0 });
-  const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, right: 0 });
+  const [userMenuPosition, setUserMenuPosition] = useState({
+    top: 0,
+    right: 0,
+  });
   const [searchPosition, setSearchPosition] = useState({ top: 0, right: 0 });
 
-  // 📍 Tính vị trí dropdown
+  // Tính vị trí dropdown
   const calculateNotifPosition = () => {
     if (notifRef.current) {
       const rect = notifRef.current.getBoundingClientRect();
@@ -72,7 +81,7 @@ const Topbar = () => {
     }
   };
 
-  // 📍 Logic tìm kiếm
+  //  Logic tìm kiếm
   const performSearch = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -83,62 +92,63 @@ const Topbar = () => {
     const results = [
       {
         id: 1,
-        title: t('dashboard'),
-        description: t('healthOverview'),
-        type: 'page',
-        path: '/dashboard',
-        icon: '🏠'
+        title: t("dashboard"),
+        description: t("healthOverview"),
+        type: "page",
+        path: "/dashboard",
+        icon: "🏠",
       },
       {
         id: 2,
-        title: t('medicalHistoryNav'),
-        description: t('medicalHistory.subtitle'),
-        type: 'page',
-        path: '/health',
-        icon: '📋'
+        title: t("medicalHistoryNav"),
+        description: t("medicalHistory.subtitle"),
+        type: "page",
+        path: "/health",
+        icon: "📋",
       },
       {
         id: 3,
-        title: t('medicalNews'),
-        description: t('medicalNewsDescription'),
-        type: 'page',
-        path: '/medical-news',
-        icon: '📰'
+        title: t("medicalNews"),
+        description: t("medicalNewsDescription"),
+        type: "page",
+        path: "/medical-news",
+        icon: "📰",
       },
       {
         id: 4,
-        title: t('fitness'),
-        description: t('myWorkouts'),
-        type: 'page',
-        path: '/fitness',
-        icon: '💪'
+        title: t("fitness"),
+        description: t("myWorkouts"),
+        type: "page",
+        path: "/fitness",
+        icon: "💪",
       },
       {
         id: 5,
-        title: t('reminders'),
-        description: t('myReminders'),
-        type: 'page',
-        path: '/reminder',
-        icon: '🔔'
+        title: t("reminders"),
+        description: t("myReminders"),
+        type: "page",
+        path: "/reminder",
+        icon: "🔔",
       },
       {
         id: 6,
-        title: t('chatbot'),
-        description: t('aiAssistant'),
-        type: 'page',
-        path: '/chatbot',
-        icon: '🤖'
-      }
-    ].filter(item => 
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.description.toLowerCase().includes(query.toLowerCase())
+        title: t("chatbot"),
+        description: t("aiAssistant"),
+        type: "page",
+        path: "/chatbot",
+        icon: "🤖",
+      },
+    ].filter(
+      (item) =>
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.description.toLowerCase().includes(query.toLowerCase())
     );
 
     setSearchResults(results);
     setShowSearchResults(true);
   };
 
-  // 📍 Đóng khi click ra ngoài
+  // Đóng khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -151,11 +161,11 @@ const Topbar = () => {
         setShowSearchResults(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 📍 Xử lý tìm kiếm
+  // Xử lý tìm kiếm
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       performSearch(searchQuery);
@@ -164,7 +174,7 @@ const Topbar = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  // 📍 Cập nhật vị trí khi mở dropdown
+  // Cập nhật vị trí khi mở dropdown
   useEffect(() => {
     if (showNotifications) calculateNotifPosition();
   }, [showNotifications]);
@@ -177,7 +187,7 @@ const Topbar = () => {
     if (showSearchResults) calculateSearchPosition();
   }, [showSearchResults]);
 
-  // 📍 Cập nhật vị trí khi scroll hoặc resize
+  //  Cập nhật vị trí khi scroll hoặc resize
   useEffect(() => {
     const handleScroll = () => {
       if (showNotifications) calculateNotifPosition();
@@ -189,12 +199,12 @@ const Topbar = () => {
       if (showUserMenu) calculateUserMenuPosition();
     };
 
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
     };
   }, [showNotifications, showUserMenu]);
 
@@ -204,7 +214,7 @@ const Topbar = () => {
         className="glass-topbar sticky top-4 z-40 ml-6 mr-8 rounded-2xl shadow-sm"
         style={{
           boxShadow:
-            '0 -5px 15px -3px rgba(0, 0, 0, 0.2), 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            "0 -5px 15px -3px rgba(0, 0, 0, 0.2), 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1)",
         }}
       >
         <div className="max-w-5xl mx-auto px-6 py-3">
@@ -214,7 +224,7 @@ const Topbar = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder={t('search')}
+                  placeholder={t("search")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => {
@@ -223,26 +233,27 @@ const Topbar = () => {
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchResults.length > 0) {
+                    if (e.key === "Enter" && searchResults.length > 0) {
                       navigate(searchResults[0].path);
                       setShowSearchResults(false);
-                      setSearchQuery('');
+                      setSearchQuery("");
                     }
-                    if (e.key === 'Escape') {
+                    if (e.key === "Escape") {
                       setShowSearchResults(false);
                     }
                   }}
                   className="w-full pl-12 pr-12 py-3 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] rounded-full bg-[var(--glass-bg-primary)] border-0 outline-none focus:ring-2 focus:ring-[var(--primary-100)] transition-all duration-300"
-                  style={{ 
-                    boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                    backdropFilter: 'blur(10px)'
+                  style={{
+                    boxShadow:
+                      "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                    backdropFilter: "blur(10px)",
                   }}
                 />
                 <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)] pointer-events-none" />
                 {searchQuery && (
                   <button
                     onClick={() => {
-                      setSearchQuery('');
+                      setSearchQuery("");
                       setShowSearchResults(false);
                     }}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--neutral-400)] hover:text-[var(--neutral-600)] transition-colors"
@@ -263,37 +274,40 @@ const Topbar = () => {
                 whileTap={{ scale: 0.95 }}
                 style={{
                   boxShadow:
-                    '0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)',
+                    "0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)",
                 }}
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <SunIcon className="w-5 h-5" />
                 ) : (
                   <MoonIcon className="w-5 h-5" />
                 )}
               </motion.button>
 
-              {/* 🔸 Added Language Toggle */}
+              {/*  Added Language Toggle */}
               <motion.button
                 className="p-2.5 rounded-xl glass-button hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)] transition-colors flex items-center justify-center"
-                onClick={() => changeLanguage(language === 'vi' ? 'en' : 'vi')}
+                onClick={() => changeLanguage(language === "vi" ? "en" : "vi")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                title={language === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+                title={
+                  language === "vi"
+                    ? "Switch to English"
+                    : "Chuyển sang Tiếng Việt"
+                }
                 style={{
-                  width: '42px',
-                  height: '42px',
+                  width: "42px",
+                  height: "42px",
                   boxShadow:
-                    '0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)',
+                    "0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)",
                 }}
               >
-                {language === 'vi' ? (
+                {language === "vi" ? (
                   <LanguageVieIcon className="w-5 h-5" />
                 ) : (
                   <LanguageEngIcon className="w-5 h-5" />
                 )}
               </motion.button>
-
 
               {/* Notifications */}
               <div className="relative" ref={notifRef}>
@@ -304,13 +318,13 @@ const Topbar = () => {
                   whileTap={{ scale: 0.98 }}
                   style={{
                     boxShadow:
-                      '0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)',
+                      "0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   <BellIcon className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-[var(--status-danger)] text-white text-xs rounded-full flex items-center justify-center px-1.5 font-semibold">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                      {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </motion.button>
@@ -325,7 +339,7 @@ const Topbar = () => {
                   whileTap={{ scale: 0.99 }}
                   style={{
                     boxShadow:
-                      '0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)',
+                      "0 4px 8px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)] flex items-center justify-center text-white font-semibold text-sm">
@@ -336,7 +350,7 @@ const Topbar = () => {
                     <p className="font-semibold text-sm text-[var(--neutral-800)]">
                       {user?.firstName} {user?.lastName}
                     </p>
-                    <p className="text-xs text-[var(--neutral-500)]">{user?.role || 'User'}</p>
+                    {/* <p className="text-xs text-[var(--neutral-500)]">{user?.role || 'User'}</p> */}
                   </div>
                 </motion.button>
               </div>
@@ -364,12 +378,13 @@ const Topbar = () => {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between">
                 <h3 className="font-semibold text-[var(--text-primary)]">
-                  {t('notificationCenter')} {unreadCount > 0 && `(${unreadCount})`}
+                  {t("notificationCenter")}{" "}
+                  {unreadCount > 0 && `(${unreadCount})`}
                 </h3>
                 <div className="flex space-x-2">
                   {unreadCount > 0 && (
@@ -377,7 +392,7 @@ const Topbar = () => {
                       className="text-xs text-[var(--primary-600)] hover:underline"
                       onClick={markAllAsRead}
                     >
-                      {t('markAsRead')}
+                      {t("markAsRead")}
                     </button>
                   )}
                   {notifList.length > 0 && (
@@ -385,7 +400,7 @@ const Topbar = () => {
                       className="text-xs text-[var(--status-danger)] hover:underline"
                       onClick={clearAll}
                     >
-                      {t('clearAll')}
+                      {t("clearAll")}
                     </button>
                   )}
                 </div>
@@ -395,11 +410,13 @@ const Topbar = () => {
                 {notifList.length === 0 ? (
                   <div className="p-12 text-center">
                     <BellIcon className="w-16 h-16 mx-auto text-[var(--neutral-300)] mb-3" />
-                    <p className="text-[var(--neutral-500)] font-medium">{t('noNotifications')}</p>
+                    <p className="text-[var(--neutral-500)] font-medium">
+                      {t("noNotifications")}
+                    </p>
                     <p className="text-xs text-[var(--neutral-400)] mt-1">
-                      {t('language') === 'vi'
-                        ? 'Các hoạt động của bạn sẽ xuất hiện ở đây'
-                        : 'Your activities will appear here'}
+                      {t("language") === "vi"
+                        ? "Các hoạt động của bạn sẽ xuất hiện ở đây"
+                        : "Your activities will appear here"}
                     </p>
                   </div>
                 ) : (
@@ -407,7 +424,7 @@ const Topbar = () => {
                     <div
                       key={notif.id}
                       className={`p-4 border-b border-[var(--neutral-200)] cursor-pointer ${
-                        !notif.read ? 'bg-[var(--primary-50)]' : ''
+                        !notif.read ? "bg-[var(--primary-50)]" : ""
                       }`}
                       onClick={() => {
                         markAsRead(notif.id);
@@ -422,11 +439,11 @@ const Topbar = () => {
                           <div className="flex items-center space-x-2 mb-1">
                             <span
                               className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                notif.type === 'success'
-                                  ? 'bg-[var(--status-healthy)]'
-                                  : notif.type === 'error'
-                                  ? 'bg-[var(--status-danger)]'
-                                  : 'bg-[var(--status-info)]'
+                                notif.type === "success"
+                                  ? "bg-[var(--status-healthy)]"
+                                  : notif.type === "error"
+                                  ? "bg-[var(--status-danger)]"
+                                  : "bg-[var(--status-info)]"
                               }`}
                             />
                             <h4 className="font-semibold text-sm text-[var(--neutral-800)]">
@@ -488,28 +505,30 @@ const Topbar = () => {
                 <p className="font-semibold text-[var(--text-primary)]">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-[var(--text-secondary)] text-sm">{user?.email}</p>
+                <p className="text-[var(--text-secondary)] text-sm">
+                  {user?.email}
+                </p>
               </div>
               <div className="py-2">
                 <button
                   className="w-full px-4 py-2 text-left flex items-center space-x-3 text-[var(--text-primary)] rounded-lg mx-2"
                   onClick={() => {
                     setShowUserMenu(false);
-                    navigate('/profile');
+                    navigate("/profile");
                   }}
                 >
                   <UserCircleIcon className="w-5 h-5" />
-                  <span>{t('profile')}</span>
+                  <span>{t("profile")}</span>
                 </button>
                 <button
                   className="w-full px-4 py-2 text-left flex items-center space-x-3 text-[var(--text-primary)] rounded-lg mx-2"
                   onClick={() => {
                     setShowUserMenu(false);
-                    navigate('/settings');
+                    navigate("/settings");
                   }}
                 >
                   <Cog6ToothIcon className="w-5 h-5" />
-                  <span>{t('settings')}</span>
+                  <span>{t("settings")}</span>
                 </button>
                 <div className="border-t border-[var(--glass-border)] my-2" />
                 <button
@@ -520,7 +539,7 @@ const Topbar = () => {
                   }}
                 >
                   <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                  <span>{t('logout')}</span>
+                  <span>{t("logout")}</span>
                 </button>
               </div>
             </motion.div>
@@ -548,12 +567,12 @@ const Topbar = () => {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b border-[var(--glass-border)]">
                 <h3 className="font-semibold text-[var(--text-primary)]">
-                  {t('search')} "{searchQuery}"
+                  {t("search")} "{searchQuery}"
                 </h3>
               </div>
 
@@ -562,10 +581,10 @@ const Topbar = () => {
                   <div className="p-8 text-center">
                     <MagnifyingGlassIcon className="w-12 h-12 mx-auto text-[var(--neutral-300)] mb-3" />
                     <p className="text-[var(--neutral-500)] font-medium">
-                      {t('noData')}
+                      {t("noData")}
                     </p>
                     <p className="text-xs text-[var(--neutral-400)] mt-1">
-                      {t('tryDifferentSearch')}
+                      {t("tryDifferentSearch")}
                     </p>
                   </div>
                 ) : (
@@ -576,7 +595,7 @@ const Topbar = () => {
                       onClick={() => {
                         navigate(result.path);
                         setShowSearchResults(false);
-                        setSearchQuery('');
+                        setSearchQuery("");
                       }}
                     >
                       <div className="flex items-start space-x-3">
@@ -611,12 +630,11 @@ const formatTimestamp = (timestamp) => {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Vừa xong';
+  if (diffMins < 1) return "Vừa xong";
   if (diffMins < 60) return `${diffMins} phút trước`;
   if (diffHours < 24) return `${diffHours} giờ trước`;
   if (diffDays < 7) return `${diffDays} ngày trước`;
-  return date.toLocaleDateString('vi-VN');
+  return date.toLocaleDateString("vi-VN");
 };
 
 export default Topbar;
-  

@@ -80,14 +80,17 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                // 🌐 Cho phép các endpoint công khai
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/news/**").permitAll()
-                .requestMatchers("/medical-news/**").permitAll()
-                .requestMatchers("/ai/**").permitAll()
-                .requestMatchers("/health/**").permitAll()
+                // 🌐 Cho phép các endpoint công khai (cả /api và không có /api)
+                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
+                .requestMatchers("/news/**", "/api/news/**").permitAll()
+                .requestMatchers("/medical-news/**", "/api/medical-news/**").permitAll()
+                .requestMatchers("/ai/**", "/api/ai/**").permitAll()
+                .requestMatchers("/health/**", "/api/health/**").permitAll()
+                .requestMatchers("/workouts/**", "/api/workouts/**").permitAll()
                 // 🌐 Cho phép tạm toàn bộ GET request (tuỳ bạn)
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/**").permitAll()
+                // 🔒 User endpoints cần xác thực (nhưng đã được JWT filter xử lý)
+                .requestMatchers("/user/**", "/api/user/**").authenticated()
                 // 🔒 Các endpoint còn lại cần xác thực
                 .anyRequest().authenticated()
             )

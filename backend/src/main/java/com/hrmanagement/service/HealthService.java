@@ -1,17 +1,18 @@
 package com.hrmanagement.service;
 
-import com.hrmanagement.model.Reminder;
-import com.hrmanagement.model.MedicalHistory;
 import com.hrmanagement.model.Measurement;
-import com.hrmanagement.repository.ReminderRepository;
-import com.hrmanagement.repository.WorkoutSessionRepository;
+import com.hrmanagement.model.Reminder;
+import com.hrmanagement.model.User;
 import com.hrmanagement.repository.MeasurementRepository;
-import com.hrmanagement.repository.MedicalHistoryRepository;
+import com.hrmanagement.repository.ReminderRepository;
+import com.hrmanagement.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,134 +25,165 @@ public class HealthService {
     private ReminderRepository reminderRepository;
 
     @Autowired
-    private WorkoutSessionRepository workoutSessionRepository;
-
+    private UserRepository userRepository;
+    
     @Autowired
     private MeasurementRepository measurementRepository;
 
-    @Autowired
-    private MedicalHistoryRepository medicalHistoryRepository;
-
-    public Map<String, Object> getTodayReminders() {
-        LocalDate today = LocalDate.now();
-        List<Reminder> items = reminderRepository.findByDate(today);
-        long on = items.stream().filter(r -> Boolean.TRUE.equals(r.getEnabled())).count();
-        long off = items.size() - on;
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("count", items.size());
-        result.put("on", on);
-        result.put("off", off);
-        result.put("items", items);
-        return result;
-    }
-
-    public Map<String, Object> getMonthReminders() {
-        YearMonth ym = YearMonth.now();
-        LocalDate start = ym.atDay(1);
-        LocalDate end = ym.atEndOfMonth();
-        List<Reminder> all = reminderRepository.findByDateRange(start, end);
-
-        int leading = start.getDayOfWeek().getValue() % 7;
-        Map<String, Object> body = new HashMap<>();
-        body.put("leading", java.util.Collections.nCopies(leading, 0));
-
-        java.util.List<Map<String, Object>> days = new java.util.ArrayList<>();
-        for (int d = 1; d <= ym.lengthOfMonth(); d++) {
-            LocalDate date = ym.atDay(d);
-            java.util.List<Reminder> dayItems = all.stream().filter(r -> r.getDate().equals(date)).toList();
-            Map<String, Object> day = new HashMap<>();
-            day.put("day", d);
-            day.put("date", date.toString());
-            day.put("items", dayItems);
-            days.add(day);
+    private User getCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
         }
-        body.put("days", days);
-        return body;
+        return userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + username));
     }
 
-    public Map<String, Object> getFitnessStats() {
-        LocalDate end = LocalDate.now();
-        LocalDate start = end.minusDays(6);
-        Integer minutes = workoutSessionRepository.sumDurationBetween(start, end);
-        if (minutes == null) minutes = 0;
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("weeklyMinutes", minutes);
-        result.put("sessions", workoutSessionRepository.findByDate(start).size());
-        return result;
+    // ... (Các hàm create, update, delete Reminder giữ nguyên) ...
+    public List<Reminder> getAllRemindersForCurrentUser() {
+        User currentUser = getCurrentUser();
+        return reminderRepository.findByUser(currentUser);
     }
 
     public Reminder createReminder(Reminder reminder) {
-        if (reminder.getEnabled() == null) reminder.setEnabled(true);
-        return reminderRepository.save(reminder);
+        User currentUser = getCurrentUser();
+        reminder.setUser(currentUser); 
+        
+        if ("none".equals(reminder.getRepeat())) { 
+            reminder.setSeriesId(null); 
+            return reminderRepository.save(reminder);
+        } else {
+            List<Reminder> remindersToSave = new ArrayList<>();
+            LocalDate startDate = reminder.getDate();
+            LocalDate endDate = reminder.getEndDate(); 
+            
+            long seriesId = System.currentTimeMillis(); 
+
+            LocalDate currentDateLoop = startDate;
+            while (!currentDateLoop.isAfter(endDate)) {
+                boolean shouldCreate = false;
+                if (reminder.getRepeat().equals("daily")) { 
+                    shouldCreate = true;
+                } else if (reminder.getRepeat().equals("weekly") && currentDateLoop.getDayOfWeek() == startDate.getDayOfWeek()) { 
+                    shouldCreate = true;
+                }
+
+                if (shouldCreate) {
+                    Reminder newInstance = new Reminder();
+                    newInstance.setUser(currentUser); 
+                    newInstance.setTitle(reminder.getTitle());
+                    newInstance.setTime(reminder.getTime());
+                    newInstance.setType(reminder.getType()); 
+                    newInstance.setEnabled(reminder.getEnabled()); 
+                    newInstance.setRepeat(reminder.getRepeat()); 
+                    newInstance.setEndDate(reminder.getEndDate()); 
+                    newInstance.setDate(currentDateLoop.toString()); 
+                    newInstance.setSeriesId(seriesId); 
+                    
+                    remindersToSave.add(newInstance);
+                }
+                
+                currentDateLoop = currentDateLoop.plusDays(1);
+            }
+            reminderRepository.saveAll(remindersToSave);
+            return remindersToSave.get(0); 
+        }
     }
 
-    public Reminder updateReminder(Long id, Reminder updated) {
-        Reminder r = reminderRepository.findById(id).orElseThrow(() -> new RuntimeException("Reminder not found"));
-        r.setTitle(updated.getTitle());
-        r.setDate(updated.getDate());
-        r.setTime(updated.getTime());
-        if (updated.getEnabled() != null) r.setEnabled(updated.getEnabled());
-        return reminderRepository.save(r);
+    public Reminder updateReminder(Long id, Reminder reminderDetails) {
+        User currentUser = getCurrentUser();
+        Reminder existingReminder = reminderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhắc nhở"));
+
+        if (!existingReminder.getUser().getId().equals(currentUser.getId())) { 
+            throw new RuntimeException("Không có quyền cập nhật nhắc nhở này");
+        }
+
+        if (existingReminder.getSeriesId() != null) { 
+            reminderDetails.setSeriesId(null); 
+            reminderDetails.setRepeat("none"); 
+        }
+
+        existingReminder.setTitle(reminderDetails.getTitle());
+        existingReminder.setDate(reminderDetails.getDate()); 
+        existingReminder.setTime(reminderDetails.getTime()); 
+        existingReminder.setType(reminderDetails.getType()); 
+        existingReminder.setEnabled(reminderDetails.getEnabled()); 
+        existingReminder.setRepeat(reminderDetails.getRepeat()); 
+        existingReminder.setEndDate(reminderDetails.getEndDate()); 
+        existingReminder.setSeriesId(reminderDetails.getSeriesId()); 
+
+        return reminderRepository.save(existingReminder);
     }
 
-    public Reminder toggleReminder(Long id, boolean enabled) {
-        Reminder r = reminderRepository.findById(id).orElseThrow(() -> new RuntimeException("Reminder not found"));
-        r.setEnabled(enabled);
-        return reminderRepository.save(r);
+    public void deleteReminder(Long id, String deleteType) {
+        User currentUser = getCurrentUser();
+        Reminder existingReminder = reminderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhắc nhở"));
+
+        if (!existingReminder.getUser().getId().equals(currentUser.getId())) { 
+            throw new RuntimeException("Không có quyền xóa nhắc nhở này");
+        }
+
+        if ("series".equals(deleteType) && existingReminder.getSeriesId() != null) { 
+            reminderRepository.deleteBySeriesIdAndUser(existingReminder.getSeriesId(), currentUser); 
+        } else {
+            reminderRepository.delete(existingReminder);
+        }
     }
 
-    public void deleteReminder(Long id) {
-        reminderRepository.deleteById(id);
+    public Map<String, Object> getTodayReminderStats() {
+        User currentUser = getCurrentUser();
+        LocalDate today = LocalDate.now();
+        List<Reminder> todayReminders = reminderRepository.findByUserAndDate(currentUser, today);
+        
+        long onCount = todayReminders.stream().filter(Reminder::getEnabled).count();
+        long offCount = todayReminders.size() - onCount;
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("count", todayReminders.size());
+        stats.put("on", onCount);
+        stats.put("off", offCount);
+        stats.put("items", todayReminders.stream().limit(3).collect(Collectors.toList()));
+        
+        return stats;
     }
 
+    // --- MỚI: Sửa lỗi "Timestamp" thành "CreatedAt" ---
     public Map<String, Object> getDashboardMetrics() {
-        Measurement latest = measurementRepository.findFirstByOrderByDateDesc().orElse(null);
-        List<Measurement> history = measurementRepository.findTop7ByOrderByDateDesc();
-
-        Map<String, Object> result = new HashMap<>();
+        User currentUser = getCurrentUser();
         
-        if (latest != null) {
-            result.put("systolic", latest.getSystolicBp());
-            result.put("diastolic", latest.getDiastolicBp());
-            result.put("heartRate", latest.getHeartRate());
-            result.put("weight", latest.getWeight());
+        // Sửa tên hàm ở đây
+        Measurement lastWeight = measurementRepository.findTopByUserAndTypeOrderByCreatedAtDesc(currentUser, "weight").orElse(null);
+        Measurement lastBloodPressure = measurementRepository.findTopByUserAndTypeOrderByCreatedAtDesc(currentUser, "blood_pressure").orElse(null);
+        Measurement lastHeartRate = measurementRepository.findTopByUserAndTypeOrderByCreatedAtDesc(currentUser, "heart_rate").orElse(null);
+        // --- HẾT SỬA LỖI ---
+
+        Map<String, Object> metrics = new HashMap<>();
+        
+        if (lastWeight != null) {
+            metrics.put("weight", lastWeight.getValue1()); 
+        } else {
+            metrics.put("weight", 0);
         }
 
-        result.put("systolicHistory", history.stream().map(Measurement::getSystolicBp).collect(Collectors.toList()));
-        result.put("diastolicHistory", history.stream().map(Measurement::getDiastolicBp).collect(Collectors.toList()));
-        result.put("heartRateHistory", history.stream().map(Measurement::getHeartRate).collect(Collectors.toList()));
-        
-        return result;
-    }
-
-    public Map<String, Object> getMedicalHistory() {
-        Map<String, Object> result = new HashMap<>();
-        List<MedicalHistory> latest = medicalHistoryRepository.findTop10ByOrderByDateDesc();
-        result.put("items", latest);
-        return result;
-    }
-
-    public MedicalHistory createMedicalHistory(MedicalHistory history) {
-        if (history.getDate() == null || history.getTitle() == null || history.getTitle().trim().isEmpty()) {
-            throw new RuntimeException("Date and title are required");
+        if (lastHeartRate != null) {
+            metrics.put("heartRate", lastHeartRate.getValue1()); 
+        } else {
+            metrics.put("heartRate", 0);
         }
-        return medicalHistoryRepository.save(history);
-    }
 
-    public MedicalHistory updateMedicalHistory(Long id, MedicalHistory updated) {
-        MedicalHistory h = medicalHistoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Medical history not found"));
-        if (updated.getDate() != null) h.setDate(updated.getDate());
-        if (updated.getTitle() != null) h.setTitle(updated.getTitle());
-        h.setNotes(updated.getNotes());
-        return medicalHistoryRepository.save(h);
-    }
+        if (lastBloodPressure != null) {
+            metrics.put("systolic", lastBloodPressure.getValue1()); 
+            metrics.put("diastolic", lastBloodPressure.getValue2()); 
+        } else {
+            metrics.put("systolic", 0);
+            metrics.put("diastolic", 0);
+        }
 
-    public void deleteMedicalHistory(Long id) {
-        medicalHistoryRepository.deleteById(id);
+        return metrics;
     }
 }
-
-

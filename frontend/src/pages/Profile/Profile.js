@@ -8,17 +8,33 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { notifications } from '../../utils/notifications';
+// --- MỚI: Import Loading Spinner ---
+import LoadingSpinner from '../../components/UI/LoadingSpinner'; 
+// --- HẾT CODE MỚI ---
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
+  // const { user, updateUser } = useAuth();
+  const { user, updateUser, updatePassword } = useAuth();
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
+  // --- MỚI: Thêm state loading ---
+  const [isSaving, setIsSaving] = useState(false);
+  // --- HẾT CODE MỚI ---
+
+  const [passwordData, setPasswordData] = useState({
+      currentPassword: '', 
+      newPassword: '',
+      confirmPassword: '',
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Sử dụng tên trường của Frontend để tiện quản lý state
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    firstName: user?.ho || '',
+    lastName: user?.ten || '',
     email: user?.email || '',
-    age: user?.age || '',
-    gender: user?.gender || 'Nam',
+    age: user?.tuoi || 0, // Dùng user?.tuoi
+    gender: user?.gioiTinh || 'Nam', // Dùng user?.gioiTinh
     bloodGroup: user?.bloodGroup || '',
     height: user?.height || '',
     weight: user?.weight || '',
@@ -26,25 +42,98 @@ const Profile = () => {
     address: user?.address || '',
   });
 
+  // --- SỬA LỖI LƯU: Xóa mock call và thêm API call thật ---
   const handleSave = async () => {
+    setIsSaving(true);
+    
+    // 1. Map dữ liệu từ Frontend sang tên trường Backend
+    const payload = {
+      id: user?.id,
+      ho: formData.firstName,
+      ten: formData.lastName,
+      email: formData.email, // Email không nên thay đổi
+      tuoi: parseInt(formData.age), // Đảm bảo là số nguyên
+      gioiTinh: formData.gender,
+      bloodGroup: formData.bloodGroup,
+      height: formData.height,
+      weight: formData.weight,
+      phone: formData.phone,
+      address: formData.address,
+    };
+
+    // 2. Gọi hàm updateUser (sẽ được sửa trong AuthContext.js)
     try {
-      // Giả lập API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      updateUser({ ...user, ...formData });
-      notifications.profileUpdated();
-      setIsEditing(false);
+      const result = await updateUser(payload);
+
+      if (result.success) {
+        notifications.profileUpdated();
+        setIsEditing(false);
+      } else {
+        notifications.actionFailed(result.error || t('updateProfile'));
+      }
+      
     } catch (e) {
-      notifications.actionFailed('cập nhật hồ sơ');
+      notifications.actionFailed(t('updateProfile') + ': ' + e.message);
+    } finally {
+      setIsSaving(false);
     }
   };
+  // --- HẾT SỬA LỖI LƯU ---
+
+  // --- THÊM HÀM XỬ LÝ INPUT MẬT KHẨU ---
+   const handlePasswordChange = (e) => {
+     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+   };
+// ------------------------------------
+
+// --- THÊM HÀM XỬ LÝ ĐỔI MẬT KHẨU ---
+   const handleChangePassword = async () => {
+     const { currentPassword, newPassword, confirmPassword } = passwordData;
+
+     if (newPassword.length < 6) {
+        return notifications.warning(t('passwordLengthError'));
+     }
+     if (newPassword !== confirmPassword) {
+        return notifications.warning(t('passwordMismatch'));
+     }
+     if (!currentPassword) { // <-- THÊM KIỂM TRA MẬT KHẨU HIỆN TẠI
+        return notifications.warning(t('currentPasswordRequired')); 
+        // (Bạn cần thêm key 'currentPasswordRequired' vào file ngôn ngữ)
+    }
+
+     setIsChangingPassword(true);
+
+     try {
+        const result = await updatePassword(currentPassword, newPassword);
+
+        if (result.success) {
+          // Reset form sau khi thành công (AuthContext đã xử lý logout)
+          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } else {
+          if (result.error && result.error.includes("Mật khẩu hiện tại không chính xác")) {
+        // Hiển thị thông báo rõ ràng, không bị thêm tiền tố "Không thể..."
+            notifications.warning("Mật khẩu hiện tại không chính xác!"); 
+        } else {
+            // Dùng actionFailed cho các lỗi chung khác
+            notifications.actionFailed(result.error || t('changePassword'));
+    }
+        }
+
+     } catch (e) {
+        notifications.actionFailed(t('changePassword') + ': ' + e.message);
+     } finally {
+        setIsChangingPassword(false);
+     }
+   };
 
   const handleCancel = () => {
+    // Đảm bảo lấy lại dữ liệu mới nhất từ user context khi hủy
     setFormData({
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
+      firstName: user?.ho || '',
+      lastName: user?.ten || '',
       email: user?.email || '',
-      age: user?.age || '',
-      gender: user?.gender || 'Nam',
+      age: user?.tuoi || 0,
+      gender: user?.gioiTinh || 'Nam',
       bloodGroup: user?.bloodGroup || '',
       height: user?.height || '',
       weight: user?.weight || '',
@@ -66,12 +155,12 @@ const Profile = () => {
           </button>
         ) : (
           <div className="flex space-x-3">
-            <button className="btn btn-secondary" onClick={handleCancel}>
+            <button className="btn btn-secondary" onClick={handleCancel} disabled={isSaving}>
               <XMarkIcon className="w-5 h-5 mr-2" />
               {t('cancel')}
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
-              <CheckIcon className="w-5 h-5 mr-2" />
+            <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <LoadingSpinner size="sm" /> : <CheckIcon className="w-5 h-5 mr-2" />}
               {t('save')}
             </button>
           </div>
@@ -83,6 +172,7 @@ const Profile = () => {
         <div className="flex items-center space-x-6">
           <div className="relative">
             <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[var(--primary-600)] to-[var(--accent-600)] flex items-center justify-center text-white text-4xl font-bold">
+              {/* --- SỬA LỖI: Dùng ho, ten --- */}
               {formData.firstName?.charAt(0)}{formData.lastName?.charAt(0)}
             </div>
             <button
@@ -132,7 +222,7 @@ const Profile = () => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              disabled={!isEditing}
+              disabled={true} // Email không cho phép sửa
             />
           </div>
           <div>
@@ -230,29 +320,63 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Change Password */}
+      {/* Change Password (Giữ nguyên) */}
       <div className="card p-6">
         <h3 className="h3 mb-6">{t('changePassword')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">{t('currentPassword')}</label>
-            <input className="input" type="password" placeholder="••••••••" />
+            {/* <input className="input" type="password" placeholder="••••••••" /> */}
+            <input 
+                className="input" 
+                type="password" 
+                name="currentPassword" // <--- THÊM NAME
+                value={passwordData.currentPassword} // <--- THÊM VALUE
+                onChange={handlePasswordChange} // <--- THÊM ONCHANGE
+                placeholder="••••••••" 
+                disabled={isChangingPassword} // <--- THÊM DISABLED
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">{t('newPassword')}</label>
-            <input className="input" type="password" placeholder="••••••••" />
+            {/* <input className="input" type="password" placeholder="••••••••" /> */}
+            <input 
+                className="input" 
+                type="password" 
+                name="newPassword" // <--- THÊM NAME
+                value={passwordData.newPassword} // <--- THÊM VALUE
+                onChange={handlePasswordChange} // <--- THÊM ONCHANGE
+                placeholder="••••••••"
+                disabled={isChangingPassword} // <--- THÊM DISABLED
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--neutral-700)] mb-2">{t('confirmPassword')}</label>
-            <input className="input" type="password" placeholder="••••••••" />
+            {/* <input className="input" type="password" placeholder="••••••••" /> */}
+            <input 
+                className="input" 
+                type="password" 
+                name="confirmPassword" // <--- THÊM NAME
+                value={passwordData.confirmPassword} // <--- THÊM VALUE
+                onChange={handlePasswordChange} // <--- THÊM ONCHANGE
+                placeholder="••••••••" 
+                disabled={isChangingPassword} // <--- THÊM DISABLED
+            />
           </div>
         </div>
         <div className="mt-6">
-          <button
+          {/* <button
             className="btn btn-primary"
             onClick={() => notifications.passwordChanged()}
           >
             {t('changePassword')}
+          </button> */}
+          <button
+             className="btn btn-primary"
+             onClick={handleChangePassword} // <--- SỬA DÒNG NÀY
+            disabled={isChangingPassword} // <--- THÊM DISABLED
+          >
+             {isChangingPassword ? <LoadingSpinner size="sm" /> : t('changePassword')} 
           </button>
         </div>
       </div>
@@ -261,4 +385,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

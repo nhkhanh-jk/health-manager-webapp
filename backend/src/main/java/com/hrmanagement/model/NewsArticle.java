@@ -1,29 +1,37 @@
 package com.hrmanagement.model;
 
 public class NewsArticle {
+
     private String title;
     private String description;
     private String url;
-    private String imageUrl;
-    private String sourceName;
+    private String urlToImage;
     private String publishedAt;
-    private String category;
+    private Source source;     // nguồn bài báo (tên báo, trang…)
+
+    // Nếu bạn có thêm field khác (category, sentiment, author, ...) 
+    // thì khai báo thêm ở đây + tạo getter/setter tương ứng.
 
     public NewsArticle() {
     }
 
-    public NewsArticle(String title, String description, String url, String imageUrl,
-                       String sourceName, String publishedAt, String category) {
+    // Có thể thêm constructor đầy đủ nếu muốn
+    public NewsArticle(String title,
+                       String description,
+                       String url,
+                       String urlToImage,
+                       String publishedAt,
+                       Source source) {
         this.title = title;
         this.description = description;
         this.url = url;
-        this.imageUrl = imageUrl;
-        this.sourceName = sourceName;
+        this.urlToImage = urlToImage;
         this.publishedAt = publishedAt;
-        this.category = category;
+        this.source = source;
     }
 
-    // Getters và Setters
+    // ===== Getter & Setter =====
+
     public String getTitle() {
         return title;
     }
@@ -48,20 +56,12 @@ public class NewsArticle {
         this.url = url;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getUrlToImage() {
+        return urlToImage;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getSourceName() {
-        return sourceName;
-    }
-
-    public void setSourceName(String sourceName) {
-        this.sourceName = sourceName;
+    public void setUrlToImage(String urlToImage) {
+        this.urlToImage = urlToImage;
     }
 
     public String getPublishedAt() {
@@ -72,11 +72,32 @@ public class NewsArticle {
         this.publishedAt = publishedAt;
     }
 
-    public String getCategory() {
-        return category;
+    public Source getSource() {
+        return source;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setSource(Source source) {
+        this.source = source;
+    }
+
+    // ================== INNER CLASS Source ==================
+
+    public static class Source {
+        private String name;
+
+        public Source() {
+        }
+
+        public Source(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 }

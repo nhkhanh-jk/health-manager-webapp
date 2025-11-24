@@ -4,37 +4,30 @@ import com.hrmanagement.payload.request.LoginRequest;
 import com.hrmanagement.payload.request.RegisterRequest;
 import com.hrmanagement.payload.response.AuthResponse;
 import com.hrmanagement.service.AuthService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// --- MỚI: Đã sửa từ javax.validation sang jakarta.validation ---
+import jakarta.validation.Valid; 
+// --- HẾT CODE MỚI ---
+
 @RestController
-@RequestMapping("/auth")
-// @CrossOrigin đã được xử lý trong SecurityConfig, nhưng để đây cũng không sao
-// @CrossOrigin(origins = "http://localhost:3000")
+@RequestMapping("/api/auth") 
 public class AuthController {
 
     @Autowired
-    AuthService authService;
+    private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        // Gọi service để xác thực và tạo token
-        String jwt = authService.loginUser(loginRequest);
-        
-        // Trả token về cho React
-        return ResponseEntity.ok(new AuthResponse(jwt));
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) { 
+        AuthResponse authResponse = authService.loginUser(loginRequest);
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        
-        // Gọi service để đăng ký
-        authService.registerUser(registerRequest);
-
-        return ResponseEntity.ok("Đăng ký tài khoản thành công!");
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) { 
+        AuthResponse authResponse = authService.registerUser(registerRequest);
+        return ResponseEntity.ok(authResponse);
     }
 }
-
-

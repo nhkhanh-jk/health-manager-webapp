@@ -1,80 +1,68 @@
 package com.hrmanagement.controller;
 
 import com.hrmanagement.model.Reminder;
-import com.hrmanagement.model.MedicalHistory;
 import com.hrmanagement.service.HealthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
-@RequestMapping("/health")
+@RequestMapping("/api/health")
 public class HealthController {
 
     @Autowired
     private HealthService healthService;
 
-    @GetMapping("/reminders/today")
-    public ResponseEntity<?> getTodayReminders() {
-        return ResponseEntity.ok(healthService.getTodayReminders());
+    // --- MỚI: Endpoint cho NewReminder.js (Lấy tất cả) ---
+    // GET /api/health/reminders
+    @GetMapping("/reminders")
+    public ResponseEntity<List<Reminder>> getAllUserReminders() {
+        List<Reminder> reminders = healthService.getAllRemindersForCurrentUser();
+        return ResponseEntity.ok(reminders);
     }
 
-    @GetMapping("/reminders/month")
-    public ResponseEntity<?> getMonthReminders() {
-        return ResponseEntity.ok(healthService.getMonthReminders());
-    }
-
-    @GetMapping("/fitness/stats")
-    public ResponseEntity<?> getFitnessStats() {
-        return ResponseEntity.ok(healthService.getFitnessStats());
-    }
-
+    // --- MỚI: Endpoint cho NewReminder.js (Tạo mới) ---
+    // POST /api/health/reminders
     @PostMapping("/reminders")
-    public ResponseEntity<?> createReminder(@RequestBody Reminder reminder) {
-        return ResponseEntity.ok(healthService.createReminder(reminder));
+    public ResponseEntity<Reminder> createReminder(@RequestBody Reminder reminder) {
+        Reminder createdReminder = healthService.createReminder(reminder);
+        return ResponseEntity.ok(createdReminder);
     }
 
+    // --- MỚI: Endpoint cho NewReminder.js (Cập nhật) ---
+    // PUT /api/health/reminders/{id}
     @PutMapping("/reminders/{id}")
-    public ResponseEntity<?> updateReminder(@PathVariable Long id, @RequestBody Reminder reminder) {
-        return ResponseEntity.ok(healthService.updateReminder(id, reminder));
+    public ResponseEntity<Reminder> updateReminder(@PathVariable Long id, @RequestBody Reminder reminderDetails) {
+        Reminder updatedReminder = healthService.updateReminder(id, reminderDetails);
+        return ResponseEntity.ok(updatedReminder);
     }
 
-    @PatchMapping("/reminders/{id}/toggle")
-    public ResponseEntity<?> toggleReminder(@PathVariable Long id, @RequestParam boolean enabled) {
-        return ResponseEntity.ok(healthService.toggleReminder(id, enabled));
-    }
-
+    // --- MỚI: Endpoint cho NewReminder.js (Xóa) ---
+    // DELETE /api/health/reminders/{id}
     @DeleteMapping("/reminders/{id}")
-    public ResponseEntity<?> deleteReminder(@PathVariable Long id) {
-        healthService.deleteReminder(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> deleteReminder(@PathVariable Long id, @RequestParam(required = false, defaultValue = "instance") String deleteType) {
+        healthService.deleteReminder(id, deleteType);
+        return ResponseEntity.noContent().build();
     }
 
+    // --- MỚI: Endpoint cho NewDashboard.js (Lấy nhắc nhở hôm nay) ---
+    // GET /api/health/reminders/today
+    @GetMapping("/reminders/today")
+    public ResponseEntity<Map<String, Object>> getTodayRemindersDashboard() {
+        // Cần triển khai logic này trong HealthService
+        Map<String, Object> todayStats = healthService.getTodayReminderStats();
+        return ResponseEntity.ok(todayStats);
+    }
+
+    // --- MỚI: Endpoint cho NewDashboard.js (Lấy chỉ số) ---
+    // GET /api/health/metrics/dashboard
     @GetMapping("/metrics/dashboard")
-    public ResponseEntity<?> getDashboardMetrics() {
-        return ResponseEntity.ok(healthService.getDashboardMetrics());
-    }
-
-    @GetMapping("/history")
-    public ResponseEntity<?> getMedicalHistory() {
-        return ResponseEntity.ok(healthService.getMedicalHistory());
-    }
-
-    @PostMapping("/history")
-    public ResponseEntity<?> createMedicalHistory(@RequestBody MedicalHistory history) {
-        return ResponseEntity.ok(healthService.createMedicalHistory(history));
-    }
-
-    @PutMapping("/history/{id}")
-    public ResponseEntity<?> updateMedicalHistory(@PathVariable Long id, @RequestBody MedicalHistory history) {
-        return ResponseEntity.ok(healthService.updateMedicalHistory(id, history));
-    }
-
-    @DeleteMapping("/history/{id}")
-    public ResponseEntity<?> deleteMedicalHistory(@PathVariable Long id) {
-        healthService.deleteMedicalHistory(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, Object>> getDashboardMetrics() {
+        // Cần triển khai logic này trong HealthService
+        Map<String, Object> metrics = healthService.getDashboardMetrics();
+        return ResponseEntity.ok(metrics);
     }
 }
-
-

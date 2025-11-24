@@ -109,5 +109,24 @@ export const notifications = {
   // AI Chat
   aiThinking: () => notifyInfo('🤖 AI đang suy nghĩ...'),
   aiError: () => notifyError('⚠️ AI không thể trả lời lúc này'),
+
+  //change password
+  changedPasswordSuccess: (message) => {
+     notifySuccess(message); 
+  },
+
+  deleteAccountSuccess: (message) => {
+     notifySuccess(message); 
+  },
+
+  warning: (message) => {
+    // Dùng notifyInfo hoặc notifyError, hoặc toast tùy chỉnh màu vàng
+    // Tạm thời dùng notifyInfo với icon cảnh báo:
+    toast(message, {
+       duration: 3000,
+       icon: '⚠️', // Icon cảnh báo
+       position: 'top-right',
+     });
+  },
 };
 
