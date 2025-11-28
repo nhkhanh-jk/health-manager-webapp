@@ -31,10 +31,17 @@
 
 ## ⚙️ Deploy Backend (Render) - 10 phút
 
-### Bước 1: Tạo Database
-1. Render Dashboard → "New +" → "PostgreSQL"
-2. Chọn Free plan
-3. Copy **Internal Database URL**
+### Bước 1: Lấy thông tin Database
+
+**Nếu dùng Neon PostgreSQL (Database cũ):**
+- JDBC URL: `jdbc:postgresql://ep-solitary-pond-ad5rpe7o-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require`
+- Username: `neondb_owner`
+- Password: `npg_nfQW3FEG6AbN` (hoặc password hiện tại)
+
+**Nếu dùng Render PostgreSQL (Database mới):**
+- Tạo PostgreSQL trên Render → Copy Internal Database URL
+- Convert sang JDBC: Thay `postgresql://` → `jdbc:postgresql://`
+- Extract username và password từ Internal URL
 
 ### Bước 2: Deploy Web Service
 1. Render Dashboard → "New +" → "Web Service"
@@ -43,12 +50,14 @@
    - **Name:** `health-manager-backend`
    - **Environment:** `Java`
    - **Root Directory:** `backend`
-   - **Build Command:** `./mvnw clean package -DskipTests`
+   - **Build Command:** `mvn clean package -DskipTests`
    - **Start Command:** `java -jar target/hm-backend-0.0.1-SNAPSHOT.jar`
 
 4. **Environment Variables:**
    ```
-   DATABASE_URL=<Internal Database URL từ PostgreSQL service>
+   SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/dbname?sslmode=require
+   SPRING_DATASOURCE_USERNAME=username
+   SPRING_DATASOURCE_PASSWORD=password
    SPRING_PROFILES_ACTIVE=production
    SERVER_PORT=10000
    JWT_SECRET=<tạo chuỗi bí mật dài>
@@ -57,8 +66,8 @@
    CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
    ```
    
-   ⚠️ **Chỉ cần set DATABASE_URL!** Code tự động parse username/password.
-   Xem chi tiết: `RENDER-DATABASE-SETUP.md`
+   ⚠️ **Quan trọng:** Dùng JDBC URL format (`jdbc:postgresql://...`)
+   📚 Xem hướng dẫn chi tiết: `RENDER-SETUP-GUIDE.md`
 
 5. **Deploy!** → Lấy Backend URL
 
