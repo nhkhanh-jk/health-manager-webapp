@@ -80,16 +80,21 @@ Sau khi deploy xong, Vercel sẽ cung cấp URL như: `https://your-app.vercel.a
 
 5. Thêm Environment Variables:
    ```
+   DATABASE_URL=<Internal Database URL từ Render PostgreSQL>
    SPRING_PROFILES_ACTIVE=production
    SERVER_PORT=10000
-   SPRING_DATASOURCE_URL=<Internal Database URL từ Render PostgreSQL>
-   SPRING_DATASOURCE_USERNAME=<username từ database URL>
-   SPRING_DATASOURCE_PASSWORD=<password từ database URL>
    JWT_SECRET=<tạo một chuỗi bí mật dài và an toàn>
    GEMINI_API_KEY=<API key từ Google AI Studio>
    NEWSAPI_KEY=<API key từ NewsAPI>
    CORS_ALLOWED_ORIGINS=https://your-frontend-url.vercel.app
    ```
+   
+   ⚠️ **QUAN TRỌNG:** 
+   - Chỉ cần set `DATABASE_URL` (copy từ PostgreSQL service)
+   - Code sẽ tự động parse và extract username, password
+   - **KHÔNG CẦN** set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+   
+   📚 Xem hướng dẫn chi tiết tại: `RENDER-DATABASE-SETUP.md`
 
 6. Click **"Create Web Service"**
 
@@ -131,15 +136,16 @@ Sau đó redeploy frontend để áp dụng thay đổi.
 ## 🔐 Environment Variables Checklist
 
 ### Backend (Render):
+- ✅ `DATABASE_URL` (Internal Database URL từ Render PostgreSQL) - **QUAN TRỌNG: Chỉ cần cái này!**
 - ✅ `SPRING_PROFILES_ACTIVE=production`
 - ✅ `SERVER_PORT=10000`
-- ✅ `SPRING_DATASOURCE_URL` (từ Render PostgreSQL)
-- ✅ `SPRING_DATASOURCE_USERNAME`
-- ✅ `SPRING_DATASOURCE_PASSWORD`
 - ✅ `JWT_SECRET` (chuỗi bí mật dài)
 - ✅ `GEMINI_API_KEY`
 - ✅ `NEWSAPI_KEY`
 - ✅ `CORS_ALLOWED_ORIGINS` (Frontend URL từ Vercel)
+
+**Lưu ý:** Code sẽ tự động parse `DATABASE_URL` và extract username, password. 
+Không cần set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` nữa!
 
 ### Frontend (Vercel):
 - ✅ `REACT_APP_API_URL` (Backend URL từ Render)

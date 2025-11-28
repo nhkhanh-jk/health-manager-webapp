@@ -48,16 +48,17 @@
 
 4. **Environment Variables:**
    ```
+   DATABASE_URL=<Internal Database URL từ PostgreSQL service>
    SPRING_PROFILES_ACTIVE=production
    SERVER_PORT=10000
-   SPRING_DATASOURCE_URL=<Internal Database URL>
-   SPRING_DATASOURCE_USERNAME=<từ database URL>
-   SPRING_DATASOURCE_PASSWORD=<từ database URL>
    JWT_SECRET=<tạo chuỗi bí mật dài>
    GEMINI_API_KEY=AIzaSyBIU4ImVkMZDkSbYnzJICD01QtNnZJUoH8
    NEWSAPI_KEY=21e76d50f5d241c692d854558ba463d0
    CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
    ```
+   
+   ⚠️ **Chỉ cần set DATABASE_URL!** Code tự động parse username/password.
+   Xem chi tiết: `RENDER-DATABASE-SETUP.md`
 
 5. **Deploy!** → Lấy Backend URL
 
