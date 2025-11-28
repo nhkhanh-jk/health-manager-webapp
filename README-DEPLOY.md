@@ -98,30 +98,21 @@ https://health-manager-frontend.vercel.app
      java -jar target/hm-backend-0.0.1-SNAPSHOT.jar
      ```
 
-5. **Environment Variables** - Thêm các biến sau:
+5. **Environment Variables** - Copy và paste các biến sau:
 
    ```bash
-   # Server
    SPRING_PROFILES_ACTIVE=production
    SERVER_PORT=10000
-   
-   # Database (từ Render PostgreSQL)
-   SPRING_DATASOURCE_URL=<Internal Database URL từ Render>
-   SPRING_DATASOURCE_USERNAME=<username từ database URL>
-   SPRING_DATASOURCE_PASSWORD=<password từ database URL>
-   
-   # JWT Secret (tạo một chuỗi dài và an toàn)
-   JWT_SECRET=your-very-long-secret-key-minimum-256-bits-here
-   
-   # Gemini AI
+   SPRING_DATASOURCE_URL=jdbc:postgresql://ep-solitary-pond-ad5rpe7o-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+   SPRING_DATASOURCE_USERNAME=neondb_owner
+   SPRING_DATASOURCE_PASSWORD=npg_nfQW3FEG6AbN
+   JWT_SECRET=day-la-mot-chuoi-bi-mat-rat-dai-va-an-toan-cho-hs512-ban-co-the-them-so-12345-va-ky-tu-dac-biet
    GEMINI_API_KEY=AIzaSyBIU4ImVkMZDkSbYnzJICD01QtNnZJUoH8
-   
-   # NewsAPI
    NEWSAPI_KEY=21e76d50f5d241c692d854558ba463d0
-   
-   # CORS (Frontend URL từ Vercel)
-   CORS_ALLOWED_ORIGINS=https://your-frontend-url.vercel.app
+   CORS_ALLOWED_ORIGINS=http://localhost:3000
    ```
+   
+   ⚠️ **Lưu ý:** Sau khi deploy frontend trên Vercel, cập nhật `CORS_ALLOWED_ORIGINS` với URL frontend thực tế.
 
 6. Click **"Create Web Service"**
 
