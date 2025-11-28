@@ -21,20 +21,27 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         String databaseUrl = environment.getProperty("DATABASE_URL");
         String springDatasourceUrl = environment.getProperty("spring.datasource.url");
 
-        // Nếu có DATABASE_URL từ Render và chưa có spring.datasource.url
+        // Nếu có DATABASE_URL từ Render (format postgresql://...) và chưa có spring.datasource.url được set
         if (databaseUrl != null && !databaseUrl.isEmpty() && !databaseUrl.startsWith("jdbc:")) {
-            if (springDatasourceUrl == null || springDatasourceUrl.isEmpty()) {
+            // Kiểm tra xem đã có spring.datasource.url chưa (từ SPRING_DATASOURCE_URL env var)
+            if (springDatasourceUrl == null || springDatasourceUrl.isEmpty() || springDatasourceUrl.equals("${SPRING_DATASOURCE_URL}")) {
                 try {
                     Map<String, Object> properties = parseDatabaseUrl(databaseUrl);
                     
-                    // Add properties to environment
+                    // Add properties to environment với priority cao nhất
                     MapPropertySource propertySource = new MapPropertySource("databaseUrlProperties", properties);
                     environment.getPropertySources().addFirst(propertySource);
+                    
+                    System.out.println("✅ Successfully parsed DATABASE_URL from Render format");
                 } catch (Exception e) {
-                    System.err.println("Failed to parse DATABASE_URL: " + databaseUrl);
+                    System.err.println("❌ Failed to parse DATABASE_URL: " + databaseUrl);
                     e.printStackTrace();
                 }
+            } else {
+                System.out.println("⚠️ SPRING_DATASOURCE_URL already set, skipping DATABASE_URL parsing");
             }
+        } else if (databaseUrl != null && databaseUrl.startsWith("jdbc:")) {
+            System.out.println("ℹ️ DATABASE_URL already in JDBC format, no parsing needed");
         }
     }
 
