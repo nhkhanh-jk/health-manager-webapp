@@ -10,12 +10,10 @@ import {
   MoonIcon,
   FireIcon,
 } from "@heroicons/react/24/outline";
-import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import LoadingSpinner from "../../components/UI/LoadingSpinner";
-
-const API_BASE_URL = "http://localhost:8080/api"; //  backend base
+import api from "../../api";
 
 const NewChatbot = () => {
   const { user } = useAuth();
@@ -28,15 +26,12 @@ const NewChatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ✅ gọi đúng endpoint backend
+  // ✅ gọi đúng endpoint backend sử dụng api instance (tự động dùng REACT_APP_API_URL)
   const chatMutation = useMutation(
     (message) =>
-      axios.post(
-        `${API_BASE_URL}/ai/chat`,
-        { message },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
+      api.post(
+        "/ai/chat",
+        { message }
       ),
     {
       onSuccess: (response) => {
