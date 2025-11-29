@@ -11,12 +11,10 @@ import {
   FireIcon,
   TrashIcon, // Thêm icon thùng rác nếu muốn xóa lịch sử
 } from "@heroicons/react/24/outline";
-import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import LoadingSpinner from "../../components/UI/LoadingSpinner";
-
-const API_BASE_URL = "http://localhost:8080/api";
+import api from "../../api";
 
 const NewChatbot = () => {
   const { user } = useAuth();
@@ -45,19 +43,16 @@ const NewChatbot = () => {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     }
   }, [messages, user?.id]);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // ✅ gọi đúng endpoint backend sử dụng api instance (tự động dùng REACT_APP_API_URL)
   const chatMutation = useMutation(
     (message) =>
-      axios.post(
-        `${API_BASE_URL}/ai/chat`,
-        { message },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
+      api.post(
+        "/ai/chat",
+        { message }
       ),
     {
       onSuccess: (response) => {
@@ -114,7 +109,6 @@ const NewChatbot = () => {
       }
     }
   };
-
   const quickQuestions = [
     {
       icon: HeartIcon,
@@ -258,8 +252,7 @@ const NewChatbot = () => {
 
               {chatMutation.isLoading && (
                 <div className="flex justify-start">
-                   {/* ... (Phần Loading animation giữ nguyên) ... */}
-                   <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-[var(--accent-600)] to-[var(--accent-700)] rounded-full flex items-center justify-center">
                       <SparklesIcon className="w-4 h-4 text-white" />
                     </div>
